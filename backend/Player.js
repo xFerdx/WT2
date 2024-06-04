@@ -2,7 +2,7 @@ export class Player{
     xPos;
     yPos;
     playerSpeed;
-    radius ;
+    radius;
     team;
     name;
     status;
@@ -93,7 +93,7 @@ export class Player{
 
     checkLaserCollision(map){
         map.lasers.forEach(l => {
-            if(l.team === -1) return;
+            if(l.team === -1 ||l.team === this.team) return;
             for (let i = 0; i < l.sides; i++) {
                 let x1 = l.location[0] + Math.cos(l.angle + i*(Math.PI * 2/l.sides)) * l.radius;
                 let y1 = l.location[1] + Math.sin(l.angle + i*(Math.PI * 2/l.sides)) * l.radius;
@@ -104,7 +104,7 @@ export class Player{
                 let x2 = this.xPos;
                 let y2 = this.yPos;
 
-                let q = ((Math.pow(x2-x1,2)+Math.pow(y2-y1,2)-(Math.pow(radius,2)))/(Math.pow(vx,2)+Math.pow(vy,2)));
+                let q = ((Math.pow(x2-x1,2)+Math.pow(y2-y1,2)-(Math.pow(this.radius,2)))/(Math.pow(vx,2)+Math.pow(vy,2)));
                 let p = (2*(x2-x1)*vx+2*(y2-y1)*vy)/(Math.pow(vx,2)+Math.pow(vy,2));
 
                 let k1 = -(-p/2 + Math.sqrt(Math.pow(p/2,2)-q));

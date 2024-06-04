@@ -14,9 +14,12 @@ lobbies.push(new Lobby(true));
 function mainLoop() {
     update();
     sendData();
+    for (let i = 0; i < lobbies.length; i++) {
+        console.log("lobby "+i+" : "+lobbies[i].users.length);
+    }
 }
 
-setInterval(mainLoop, 1000);
+setInterval(mainLoop, 10);
 
 wss.on('connection', function connection(ws) {
     console.log('A client connected.');
@@ -49,10 +52,7 @@ wss.on('connection', function connection(ws) {
 
     ws.on('close', function close() {
         console.log('A client disconnected.');
-        let user = findUser(ws);
-        let lobby = findLobby(user);
-        let idx = lobby.users.indexOf(user);
-        lobby.users.splice(idx,1);
+        deleteWSFromLobby(ws);
     });
 
 });
@@ -79,18 +79,27 @@ function findLobby(user){
     return null;
 }
 
+function deleteWSFromLobby(ws){
+    let user = findUser(ws);
+    let lobby = findLobby(user);
+    let idx = lobby.users.indexOf(user);
+    lobby.users.splice(idx,1);
+}
+
 function joinLobby(ws, playerNumber, userName){
     let user = findUser(ws);
     console.log(user);
-    user.player = new Player(100,100,0,20,0,userName,null);
+    user.player = new Player(100,100,3,20,0,userName,null);
 
     for (let i = 0; i < lobbies.length; i++) {
         if(playerNumber * 2 !== lobbies[i].maxPlayers || lobbies[i].users.length === lobbies[i].maxPlayers || i === 0)
             continue;
+        deleteWSFromLobby(ws);
         lobbies[i].users.push(user);
         return;
     }
 
+    deleteWSFromLobby(ws);
     let lobby = new Lobby(false, playerNumber * 2);
     lobby.users.push(user);
     lobbies.push(lobby);
@@ -98,7 +107,7 @@ function joinLobby(ws, playerNumber, userName){
 
 function startLobby(lobby){
     lobby.users.forEach((u, idx) => {
-        u.team = idx % 2;
+        u.player.team = idx % 2;
     });
     lobby.map = MapFactory.map1();
     lobby.status = lobbyStates.RUNNING;
@@ -115,6 +124,7 @@ function closeLobby(idx){
 function update(){
     lobbies.forEach((l, idx) => {
         if(idx === 0)return;
+        if(l.users.length === 0)lobbies.splice(idx, 1);
         if(l.maxPlayers === l.users.length && l.status !== lobbyStates.RUNNING)startLobby(l);
         if(l.status !== lobbyStates.RUNNING)return;
         l.users.forEach(u => {

@@ -262,8 +262,9 @@ function draw() {
             }
         }
     });
-
-
+    ctx.fillStyle = 'white';
+    ctx.font = "30px Arial";
+    ctx.fillText("fps: "+fps,30,40);
 
 }
 
@@ -277,7 +278,12 @@ function setUp(){
     gameLoop()
 }
 
+let start = Date.now();
+let fps;
+
 function gameLoop() {
+    fps = Math.round(1000/(Date.now()-start));
+    start = Date.now();
     update();
     draw();
     checkCollisions();
