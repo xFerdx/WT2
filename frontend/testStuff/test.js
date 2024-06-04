@@ -99,9 +99,7 @@ const ctx = canvas.getContext('2d');
 let left = false, right = false, up = false, down = false;
 
 let playerPos = [100,100];
-let playerSpeed = [0,0];
-let maxSpeed = 3;
-let acceleration = 1, deceleration= 1;
+let speed = 3;
 let radius = 15;
 let team = 1;
 
@@ -118,25 +116,13 @@ let yMax = screenHeight * 0.99;
 let picNum = 1;
 
 function update() {
-    if(right)playerSpeed[0] = Math.min(playerSpeed[0] + acceleration, maxSpeed);
-    if(left)playerSpeed[0] = Math.max(playerSpeed[0] - acceleration, -maxSpeed);
-    if(down)playerSpeed[1] = Math.min(playerSpeed[1] + acceleration, maxSpeed);
-    if(up)playerSpeed[1] = Math.max(playerSpeed[1] - acceleration, -maxSpeed);
+    let upOrDown = up || down;
+    let leftOrRight = left || right;
 
-    if(!right && !left){
-        if(Math.abs(playerSpeed[0])<=acceleration)playerSpeed[0]=0;
-        else if(playerSpeed[0]>0) playerSpeed[0] -= deceleration;
-        else if(playerSpeed[0]<0) playerSpeed[0] += deceleration;
-    }
-
-    if(!up && !down){
-        if(Math.abs(playerSpeed[1])<=acceleration)playerSpeed[1]=0;
-        else if(playerSpeed[1] > 0) playerSpeed[1] -= deceleration;
-        else if(playerSpeed[1] < 0) playerSpeed[1] += deceleration;
-    }
-
-    playerPos[0] += playerSpeed[0];
-    playerPos[1] += playerSpeed[1];
+    if(right)playerPos[0] += speed / (upOrDown?Math.sqrt(2):1);
+    if(left)playerPos[0] -= speed / (upOrDown?Math.sqrt(2):1);
+    if(down)playerPos[1] += speed / (leftOrRight?Math.sqrt(2):1);
+    if(up)playerPos[1] -= speed / (leftOrRight?Math.sqrt(2):1);
 
     if(playerPos[0] > xMax)playerPos[0] = xMin;
     if(playerPos[0] < xMin)playerPos[0] = xMax;
@@ -282,7 +268,7 @@ function draw() {
 }
 
 function setUp(){
-    console.log(laserImage.width+" "+laserImage.height);
+
     dreher = map1();
     const canvas = document.getElementById('myCanvas');
     canvas.width = screenWidth;

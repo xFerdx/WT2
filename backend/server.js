@@ -1,77 +1,175 @@
-const WebSocket = require('ws');
+import { WebSocketServer } from 'ws';
+import {lobbyStates, Lobby} from './Lobby.js';
+import {User} from './User.js';
+import {Player} from "./Player.js";
+import {MapFactory} from "./Map.js";
 
-const wss = new WebSocket.Server({ port: 8080 });
+console.log("server started")
+const wss = new WebSocketServer({ port: 8080 });
 
-const clients = [];
+let lobbies = [];
 
-class Player{
-    x;
-    y;
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-    }
+lobbies.push(new Lobby(true));
+
+function mainLoop() {
+    update();
+    sendData();
 }
 
-let player = [];
+setInterval(mainLoop, 1000);
 
 wss.on('connection', function connection(ws) {
     console.log('A client connected.');
-    clients.push(ws);
-    player.push(new Player(50,50));
-    sendPlayers(ws);
-    sendPlayerIdx(ws,player.length-1)
+    lobbies[0].users.push(new User(ws));
 
     ws.on('message', function incoming(message) {
         const data = JSON.parse(message);
         console.log('Received: %s', data);
-        console.log("connected:" + clients.length + " " + player.length)
-        let idx = clients.indexOf(ws);
-        player[idx] = data;
 
-        clients.forEach(client => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-
-                sendPlayers(client)
+        switch (data.type) {
+            case 'pressedKey': {
+                let user = findUser(ws);
+                user.player.keyPressed(data.message);
+                break;
             }
-        });
+            case 'releasedKey': {
+                let user = findUser(ws);
+                user.player.keyReleased(data.message);
+                break;
+            }
+            case 'requestJoin': {
+                joinLobby(ws, data.playerNumber, data.userName)
+                break;
+            }
+            default:
+                console.log("Unknown message type:", data.type);
+        }
+
     });
 
     ws.on('close', function close() {
         console.log('A client disconnected.');
-
-        const index = clients.indexOf(ws);
-        if (index > -1) {
-            clients.splice(index, 1);
-            player.splice(index, 1);
-
-            clients.forEach((client, i) => {
-                if (client !== ws && client.readyState === WebSocket.OPEN) {
-                    sendPlayers(client);
-                    if(i >= index)sendPlayerIdx(client,i);
-
-                }
-            });
-
-
-        }
+        let user = findUser(ws);
+        let lobby = findLobby(user);
+        let idx = lobby.users.indexOf(user);
+        lobby.users.splice(idx,1);
     });
-
 
 });
 
-function sendPlayers(client){
-    const payload = {
-        type: 'playerUpdate',
-        message: player
-    };
-    client.send(JSON.stringify(payload));
+function findUser(webSocket){
+    for (let l of lobbies) {
+        for (let u of l.users) {
+            if (u.websocket === webSocket) {
+                return u;
+            }
+        }
+    }
+    return null;
 }
 
-function sendPlayerIdx(client, idx){
-    const payload = {
-        type: 'localPlayerIdx',
-        message: idx
-    };
-    client.send(JSON.stringify(payload));
+function findLobby(user){
+    for (let l of lobbies) {
+        for (let u of l.users) {
+            if (u === user) {
+                return l;
+            }
+        }
+    }
+    return null;
 }
+
+function joinLobby(ws, playerNumber, userName){
+    let user = findUser(ws);
+    console.log(user);
+    user.player = new Player(100,100,0,20,0,userName,null);
+
+    for (let i = 0; i < lobbies.length; i++) {
+        if(playerNumber * 2 !== lobbies[i].maxPlayers || lobbies[i].users.length === lobbies[i].maxPlayers || i === 0)
+            continue;
+        lobbies[i].users.push(user);
+        return;
+    }
+
+    let lobby = new Lobby(false, playerNumber * 2);
+    lobby.users.push(user);
+    lobbies.push(lobby);
+}
+
+function startLobby(lobby){
+    lobby.users.forEach((u, idx) => {
+        u.team = idx % 2;
+    });
+    lobby.map = MapFactory.map1();
+    lobby.status = lobbyStates.RUNNING;
+    lobby.users.forEach(u => {
+       sendStartGame(u.websocket);
+    });
+}
+
+function closeLobby(idx){
+    lobbies[0].users.concat(lobbies[idx].users);
+    lobbies.splice(idx, 1);
+}
+
+function update(){
+    lobbies.forEach((l, idx) => {
+        if(idx === 0)return;
+        if(l.maxPlayers === l.users.length && l.status !== lobbyStates.RUNNING)startLobby(l);
+        if(l.status !== lobbyStates.RUNNING)return;
+        l.users.forEach(u => {
+            u.player.updateLocation(l.map);
+            u.player.checkLaserCollision(l.map);
+            u.player.checkLaserActivation(l.map);
+        });
+        l.map.lasers.forEach(la => {
+            la.update();
+        });
+
+    });
+}
+
+function sendData(){
+    lobbies.forEach((l, idx) => {
+       if(idx === 0 || l.status !== lobbyStates.RUNNING)return;
+       l.users.forEach(u => {
+           console.log("sended");
+           const p = l.users.map(user => user.player);
+           const allP = [].concat(...p);
+           sendPlayers(u.websocket, allP);
+           sendMap(u.websocket, l.map);
+       });
+
+    });
+}
+
+function sendMap(ws, map){
+    const payload = {
+        type: 'mapUpdate',
+        message: map
+    };
+    ws.send(JSON.stringify(payload));
+}
+
+function sendPlayers(ws, players){
+    const payload = {
+        type: 'playersUpdate',
+        message: players
+    };
+    ws.send(JSON.stringify(payload));
+}
+
+function sendStartGame(ws){
+    const payload = {
+        type: 'startGame'
+    };
+    ws.send(JSON.stringify(payload));
+}
+
+
+
+
+
+
+
+
