@@ -86,6 +86,7 @@ export class Player{
 
     checkLaserActivation(map){
         map.lasers.forEach(l =>{
+            if(l.team !== -1)return;
             if(Math.pow(this.radius + 10,2) >= Math.pow(this.xPos - l.location[0],2) +  Math.pow(this.yPos - l.location[1],2))
                 l.team = this.team;
         });
@@ -93,7 +94,7 @@ export class Player{
 
     checkLaserCollision(map){
         map.lasers.forEach(l => {
-            if(l.team === -1 ||l.team === this.team) return;
+            if(l.team === -1 || l.team === this.team) return;
             for (let i = 0; i < l.sides; i++) {
                 let x1 = l.location[0] + Math.cos(l.angle + i*(Math.PI * 2/l.sides)) * l.radius;
                 let y1 = l.location[1] + Math.sin(l.angle + i*(Math.PI * 2/l.sides)) * l.radius;

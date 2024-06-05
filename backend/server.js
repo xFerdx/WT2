@@ -89,7 +89,7 @@ function deleteWSFromLobby(ws){
 function joinLobby(ws, playerNumber, userName){
     let user = findUser(ws);
     console.log(user);
-    user.player = new Player(100,100,3,20,0,userName,null);
+    user.player = new Player(100,100,6.5,20,0,userName,null);
 
     for (let i = 0; i < lobbies.length; i++) {
         if(playerNumber * 2 !== lobbies[i].maxPlayers || lobbies[i].users.length === lobbies[i].maxPlayers || i === 0)
@@ -108,6 +108,8 @@ function joinLobby(ws, playerNumber, userName){
 function startLobby(lobby){
     lobby.users.forEach((u, idx) => {
         u.player.team = idx % 2;
+        u.player.xPos = Map.xMin + (Map.xMax - Map.xMin) * (idx % 2 === 0? 0.1 : 0.9);
+        u.player.yPos = Map.yMin + (Map.yMax - Map.yMin) / ((lobby.users.length/2)+1) * ((idx/2)+1);
     });
     lobby.map = MapFactory.map1();
     lobby.status = lobbyStates.RUNNING;
@@ -117,6 +119,9 @@ function startLobby(lobby){
 }
 
 function closeLobby(idx){
+    lobbies[idx].users.forEach(u => {
+       u.player = null;
+    });
     lobbies[0].users.concat(lobbies[idx].users);
     lobbies.splice(idx, 1);
 }

@@ -37,6 +37,10 @@ const laserImage = new Image();
 const bgImage = new Image();
 bgImage.src = '../Background/bg2.jpg';
 
+const playerImage = new Image();
+playerImage.src = '../SpiderPack/WalkingOrange/SpiderWalking1.png';
+
+let lastDir = 0;
 
 class Movement{
     xPos1;
@@ -114,6 +118,7 @@ let yMin = screenHeight * 0.01;
 let yMax = screenHeight * 0.99;
 
 let picNum = 1;
+let playerPicNum = 1;
 
 function update() {
     let upOrDown = up || down;
@@ -160,6 +165,10 @@ function update() {
     picNum+= 0.1;
     if(picNum>=9)picNum = 1;
 
+    playerPicNum+= 0.1;
+    if(playerPicNum>=5)playerPicNum = 1;
+
+
 }
 
 function checkCollisions(){
@@ -198,11 +207,33 @@ function draw() {
     ctx.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
 
     ctx.beginPath();
-    ctx.arc(playerPos[0], playerPos[1], radius, 0, Math.PI * 2);
+    ctx.arc(playerPos[0], playerPos[1], radius-5, 0, Math.PI * 2);
     ctx.fillStyle = 'red';
     ctx.fill();
     ctx.closePath();
 
+    let angle = 0;
+    if(left && down)angle = 1;
+    else if(left && up)angle = 3;
+    else if(right && up)angle = 5;
+    else if(right && down)angle = 7;
+    else if(left)angle = 2;
+    else if(up)angle = 4;
+    else if(right)angle = 6;
+    else if(down)angle = 0;
+    angle = (angle/8)*2*Math.PI;
+    if(!left && !right && !up && !down){
+        playerImage.src = '../SpiderPack/IdlePurple/SpiderIdleFront'+Math.floor(playerPicNum)+'.png';
+        angle = (lastDir/4)*2*Math.PI;
+    }else{
+        playerImage.src = '../SpiderPack/WalkingPurple/SpiderWalking'+Math.floor(playerPicNum)+'.png';
+    }
+    ctx.save();
+    ctx.translate(playerPos[0], playerPos[1]);
+    ctx.rotate(angle);
+    ctx.scale(3, 3);
+    ctx.drawImage(playerImage, -playerImage.width/2, -playerImage.height/2);
+    ctx.restore();
 
     dreher.forEach(e => {
         if(e.startTime !== 0)return;
@@ -304,9 +335,9 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('keyup', (e) => {
-    if (e.code === "KeyA")left = false;
-    if (e.code === "KeyD")right = false;
-    if (e.code === "KeyS")down = false;
-    if (e.code === "KeyW")up = false;
+    if (e.code === "KeyA"){left = false; lastDir = 1;}
+    if (e.code === "KeyD"){right = false; lastDir = 3;}
+    if (e.code === "KeyS"){down = false; lastDir = 0;}
+    if (e.code === "KeyW"){up = false; lastDir = 2;}
 });
 

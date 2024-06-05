@@ -8,7 +8,8 @@ let inGame = false;
 //document.getElementById('preLobby').style.display = 'block';
 //document.getElementById('game').style.display = 'none';
 
-const laserImage = new Image();
+const laserImageBlue = new Image();
+const laserImageRed = new Image();
 
 const bgImage = new Image();
 bgImage.src = './Background/bg2.jpg';
@@ -73,15 +74,26 @@ function draw() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.drawImage(bgImage, 0,0, 1500, 900);
+    ctx.drawImage(bgImage, 0,0, 1900, 900);
 
     players.forEach(p => {
         ctx.beginPath();
-        ctx.arc(p.xPos, p.yPos, 20, 0, Math.PI * 2);
+        ctx.arc(p.xPos, p.yPos, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = p.team === 0?'blue':'red';
         ctx.fill();
         ctx.closePath();
         if(p.status === "DEAD")ctx.drawImage(deadImage, p.xPos-15, p.yPos-15,30,30);
+
+        ctx.beginPath();
+        ctx.arc(p.xPos, p.yPos, p.radius+2, 0, Math.PI * 1.5);
+        ctx.strokeStyle = 'white';
+        ctx.stroke();
+        ctx.closePath();
+        if(p.status === "DEAD")ctx.drawImage(deadImage, p.xPos-15, p.yPos-15,30,30);
+
+        ctx.fillStyle = 'white';
+        ctx.font = "12px Arial";
+        ctx.fillText(p.name, p.xPos - p.name.length * 4, p.yPos-p.radius-3);
     });
 
 
@@ -110,7 +122,8 @@ function draw() {
                 ctx.stroke();
             }
         }else{
-            laserImage.src = './LaserBeam/'+(l.team === 0?'blue':'red')+'/laser_A_'+Math.floor(picNum)+'.png';
+            laserImageBlue.src = './LaserBeam/blue/laser_A_'+Math.floor(picNum)+'.png';
+            laserImageRed.src = './LaserBeam/red/laser_A_'+Math.floor(picNum)+'.png';
             for (let i = 0; i < l.sides; i++) {
                 let px = l.location[0] + Math.cos(l.angle + i * (Math.PI * 2 / l.sides)) * l.radius;
                 let py = l.location[1] + Math.sin(l.angle + i * (Math.PI * 2 / l.sides)) * l.radius;
@@ -123,17 +136,18 @@ function draw() {
                 ctx.stroke();
                 ctx.closePath();
 
+                let thisImg = (l.team === 0)?laserImageBlue:laserImageRed;
                 const scaleX = 1;
-                const scaleY = l.radius / laserImage.height;
+                const scaleY = l.radius / thisImg.height;
                 const xPos = l.location[0];
                 const yPos = l.location[1];
-                const pivotX = laserImage.width / 2;
-                const pivotY = laserImage.height;
+                const pivotX = thisImg.width / 2;
+                const pivotY = thisImg.height;
                 ctx.save();
                 ctx.translate(xPos, yPos);
                 ctx.rotate(l.angle + i * (Math.PI * 2 / l.sides) + 0.25 * 2*Math.PI);
                 ctx.scale(scaleX, scaleY);
-                ctx.drawImage(laserImage, -pivotX, -pivotY);
+                ctx.drawImage(thisImg, -pivotX, -pivotY);
                 ctx.restore();
 
                 ctx.beginPath();
@@ -151,7 +165,7 @@ function draw() {
     ctx.font = "30px Arial";
     ctx.fillText("fps: "+fps,30,40);
 
-    picNum+= 0.1;
+    picNum+= 0.2;
     if(picNum>=9)picNum = 1;
 
     if(!inGame)
