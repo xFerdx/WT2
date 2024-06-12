@@ -2,7 +2,7 @@ import { WebSocketServer } from 'ws';
 import {lobbyStates, Lobby} from './Lobby.js';
 import {User} from './User.js';
 import {Player} from "./Player.js";
-import {MapFactory} from "./Map.js";
+import {MapFactory, Map} from "./Map.js";
 
 console.log("server started")
 const wss = new WebSocketServer({ port: 8080 });
@@ -109,7 +109,7 @@ function startLobby(lobby){
     lobby.users.forEach((u, idx) => {
         u.player.team = idx % 2;
         u.player.xPos = Map.xMin + (Map.xMax - Map.xMin) * (idx % 2 === 0? 0.1 : 0.9);
-        u.player.yPos = Map.yMin + (Map.yMax - Map.yMin) / ((lobby.users.length/2)+1) * ((idx/2)+1);
+        u.player.yPos = Map.yMin + (Map.yMax - Map.yMin) / (Math.floor(lobby.users.length/2)+1) * (Math.floor(idx/2)+1);
     });
     lobby.map = MapFactory.map1();
     lobby.status = lobbyStates.RUNNING;
