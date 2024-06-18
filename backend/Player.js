@@ -1,3 +1,6 @@
+import {Map} from "./Map.js";
+
+
 export class Player{
     xPos;
     yPos;
@@ -11,6 +14,7 @@ export class Player{
     right;
     up;
     down;
+    stunnedTime = 0;
 
 
     constructor(xPos, yPos, playerSpeed, radius, team, name, ability) {
@@ -40,7 +44,7 @@ export class Player{
                 this.up = true;
                 break;
             case 'SPACE':
-                this.ability.active();
+                this.ability.pressed = true;
                 break;
             default:
                 console.log("unknown key");
@@ -77,27 +81,28 @@ export class Player{
         if(this.down)this.yPos += this.playerSpeed / (leftOrRight?Math.sqrt(2):1);
         if(this.up)this.yPos -= this.playerSpeed / (leftOrRight?Math.sqrt(2):1);
 
-        if(this.xPos > map.xMax)this.xPos = map.xMin;
-        if(this.xPos < map.xMin)this.xPos = map.xMax;
-        if(this.yPos > map.yMax)this.yPos = map.yMin;
-        if(this.yPos < map.yMin)this.yPos = map.yMax;
+        if(this.xPos > Map.xMax)this.xPos = 0;
+        if(this.xPos < 0)this.xPos = Map.xMax;
+        if(this.yPos > Map.yMax)this.yPos = 0;
+        if(this.yPos < 0)this.yPos = Map.yMax;
     }
 
 
     checkLaserActivation(map){
         map.lasers.forEach(l =>{
-            if(l.team !== -1)return;
-            if(Math.pow(this.radius + 10,2) >= Math.pow(this.xPos - l.location[0],2) +  Math.pow(this.yPos - l.location[1],2))
+            if(l.team !== -1 || l.startTime > 0)return;
+            if((this.radius + 10)**2 >= (this.xPos - l.location[0])**2 +  (this.yPos - l.location[1])**2)
                 l.team = this.team;
         });
     }
 
     checkLaserCollision(map){
+        if(this.status === playerStates.IMMORTAL)return;
         map.lasers.forEach(l => {
             if(l.team === -1 || l.team === this.team) return;
             for (let i = 0; i < l.sides; i++) {
-                let x1 = l.location[0] + Math.cos(l.angle + i*(Math.PI * 2/l.sides)) * l.radius;
-                let y1 = l.location[1] + Math.sin(l.angle + i*(Math.PI * 2/l.sides)) * l.radius;
+                let x1 = l.location[0] + Math.cos(l.angle + i * (Math.PI * 2 / l.sides)) * l.radius;
+                let y1 = l.location[1] + Math.sin(l.angle + i * (Math.PI * 2 / l.sides)) * l.radius;
 
                 let vx = l.location[0] - x1;
                 let vy = l.location[1] - y1;
@@ -105,11 +110,11 @@ export class Player{
                 let x2 = this.xPos;
                 let y2 = this.yPos;
 
-                let q = ((Math.pow(x2-x1,2)+Math.pow(y2-y1,2)-(Math.pow(this.radius,2)))/(Math.pow(vx,2)+Math.pow(vy,2)));
-                let p = (2*(x2-x1)*vx+2*(y2-y1)*vy)/(Math.pow(vx,2)+Math.pow(vy,2));
+                let q = ((x2-x1)**2 + (y2-y1)**2 - this.radius**2) / (vx**2 + vy**2);
+                let p = (2*(x2-x1)*vx + 2*(y2-y1)*vy) / (vx**2 + vy**2);
 
-                let k1 = -(-p/2 + Math.sqrt(Math.pow(p/2,2)-q));
-                let k2 = -(-p/2 - Math.sqrt(Math.pow(p/2,2)-q));
+                let k1 = -(-p/2 + Math.sqrt((p/2)**2-q));
+                let k2 = -(-p/2 - Math.sqrt((p/2)**2-q));
 
                 if (isNaN(k1) || isNaN(k2)) continue;
                 let minK = Math.max(k1,k2);
@@ -122,11 +127,21 @@ export class Player{
         
     }
 
+    updateEffects(){
+        if(this.status !== playerStates.STUNNED)return;
+        if(this.stunnedTime > 0){
+            this.stunnedTime--;
+        }else{
+            this.status = playerStates.ALIVE;
+        }
+    }
+
 
 }
 
 export const playerStates = {
     ALIVE: 'ALIVE',
     DEAD: 'DEAD',
-    STUNNED: 'STUNNED'
+    STUNNED: 'STUNNED',
+    IMMORTAL: 'IMMORTAL'
 };

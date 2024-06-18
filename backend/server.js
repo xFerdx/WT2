@@ -3,6 +3,7 @@ import {lobbyStates, Lobby} from './Lobby.js';
 import {User} from './User.js';
 import {Player} from "./Player.js";
 import {MapFactory, Map} from "./Map.js";
+import {AbilityStunner, AbilityHunter, AbilityThief, AbilityImmortal} from "./Ability.js";
 
 console.log("server started")
 const wss = new WebSocketServer({ port: 8080 });
@@ -11,12 +12,17 @@ let lobbies = [];
 
 lobbies.push(new Lobby(true));
 
+let t = Date.now();
+
 function mainLoop() {
+    //console.log(Date.now()-t);
+    t = Date.now();
     update();
     sendData();
-    for (let i = 0; i < lobbies.length; i++) {
-        console.log("lobby "+i+" : "+lobbies[i].users.length);
-    }
+    //for (let i = 0; i < lobbies.length; i++)
+        //console.log("lobby "+i+" : "+lobbies[i].users.length);
+
+
 }
 
 setInterval(mainLoop, 10);
@@ -41,7 +47,7 @@ wss.on('connection', function connection(ws) {
                 break;
             }
             case 'requestJoin': {
-                joinLobby(ws, data.playerNumber, data.userName)
+                joinLobby(ws, data.playerNumber, data.userName, data.ability)
                 break;
             }
             default:
@@ -86,13 +92,30 @@ function deleteWSFromLobby(ws){
     lobby.users.splice(idx,1);
 }
 
-function joinLobby(ws, playerNumber, userName){
+function joinLobby(ws, playerNumber, userName, ability){
     let user = findUser(ws);
-    console.log(user);
-    user.player = new Player(100,100,6.5,20,0,userName,null);
+    let abilityObject;
+    switch (ability){
+        case "hunter":
+            abilityObject = new AbilityHunter();
+            break;
+        case "stunner":
+            abilityObject = new AbilityStunner();
+            break;
+        case "immortal":
+            abilityObject = new AbilityImmortal();
+            break;
+        case "thief":
+            abilityObject = new AbilityThief();
+            break;
+        default:
+            abilityObject = null;
+    }
+
+    user.player = new Player(100,100,6.5,20,0,userName,abilityObject);
 
     for (let i = 0; i < lobbies.length; i++) {
-        if(playerNumber * 2 !== lobbies[i].maxPlayers || lobbies[i].users.length === lobbies[i].maxPlayers || i === 0)
+        if(playerNumber * 2 !== lobbies[i].maxPlayers || lobbies[i].users.length === lobbies[i].maxPlayers || lobbies[i].status !== lobbyStates.WAITING|| i === 0)
             continue;
         deleteWSFromLobby(ws);
         lobbies[i].users.push(user);
@@ -108,8 +131,8 @@ function joinLobby(ws, playerNumber, userName){
 function startLobby(lobby){
     lobby.users.forEach((u, idx) => {
         u.player.team = idx % 2;
-        u.player.xPos = Map.xMin + (Map.xMax - Map.xMin) * (idx % 2 === 0? 0.1 : 0.9);
-        u.player.yPos = Map.yMin + (Map.yMax - Map.yMin) / (Math.floor(lobby.users.length/2)+1) * (Math.floor(idx/2)+1);
+        u.player.xPos = Map.xMax * (idx % 2 === 0? 0.1 : 0.9);
+        u.player.yPos = Map.yMax / (Math.floor(lobby.users.length/2)+1) * (Math.floor(idx/2)+1);
     });
     lobby.map = MapFactory.map1();
     lobby.status = lobbyStates.RUNNING;
@@ -132,13 +155,17 @@ function update(){
         if(l.users.length === 0)lobbies.splice(idx, 1);
         if(l.maxPlayers === l.users.length && l.status !== lobbyStates.RUNNING)startLobby(l);
         if(l.status !== lobbyStates.RUNNING)return;
+
         l.users.forEach(u => {
             u.player.updateLocation(l.map);
             u.player.checkLaserCollision(l.map);
             u.player.checkLaserActivation(l.map);
+            u.player.ability.update(l.map, l.users.map(user => user.player), u.player);
+            u.player.updateEffects();
         });
-        l.map.lasers.forEach(la => {
-            la.update();
+
+        l.map.lasers.forEach(lasers => {
+            lasers.update();
         });
 
     });
@@ -148,7 +175,6 @@ function sendData(){
     lobbies.forEach((l, idx) => {
        if(idx === 0 || l.status !== lobbyStates.RUNNING)return;
        l.users.forEach(u => {
-           console.log("sended");
            const p = l.users.map(user => user.player);
            const allP = [].concat(...p);
            sendPlayers(u.websocket, allP);
