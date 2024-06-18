@@ -1,4 +1,4 @@
-const socket = new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://192.168.0.108:8080');//new WebSocket('ws://localhost:8080');
 
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
@@ -10,8 +10,8 @@ const laserImagesRed = [];
 for (let i = 1; i < 9; i++) {
     let lb = new Image();
     let lr = new Image();
-    lb.src = './LaserBeam/blue/laser_A_' + i + '.png';
-    lr.src = './LaserBeam/red/laser_A_' + i + '.png';
+    lb.src = '/LaserBeam/blue/laser_A_' + i + '.png';
+    lr.src = '/LaserBeam/red/laser_A_' + i + '.png';
     laserImagesBlue.push(lb);
     laserImagesRed.push(lr);
 }
@@ -19,7 +19,7 @@ for (let i = 1; i < 9; i++) {
 const shockEffects = [];
 for (let i = 1; i < 10; i++) {
     let s = new Image();
-    s.src = './Effects/'+i+".png";
+    s.src = '/Effects/'+i+".png";
     shockEffects.push(s);
 }
 
@@ -28,10 +28,10 @@ console.log(window.innerHeight)
 console.log(window.innerWidth)
 
 const bgImage = new Image();
-bgImage.src = './Background/bg2.jpg';
+bgImage.src = '/Background/bg2.jpg';
 
 const deadImage = new Image();
-deadImage.src = './assets/dead.png';
+deadImage.src = '/assets/dead.png';
 
 let picNum = 1;
 
@@ -171,20 +171,6 @@ function draw() {
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 ctx.closePath();
-
-                let thisImg = (l.team === 0)?laserImagesBlue[Math.floor(picNum % 8)]:laserImagesRed[Math.floor(picNum % 8)];
-                const scaleX = 1;
-                const scaleY = l.radius / thisImg.height;
-                const xPos = l.location[0];
-                const yPos = l.location[1];
-                const pivotX = thisImg.width / 2;
-                const pivotY = thisImg.height;
-                ctx.save();
-                ctx.translate(xPos, yPos);
-                ctx.rotate(l.angle + i * (Math.PI * 2 / l.sides) + 0.25 * 2*Math.PI);
-                ctx.scale(scaleX, scaleY);
-                ctx.drawImage(thisImg, -pivotX, -pivotY);
-                ctx.restore();
 
                 ctx.beginPath();
                 ctx.arc(l.location[0], l.location[1], 10, 0, Math.PI * 2);
