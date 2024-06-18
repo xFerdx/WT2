@@ -172,6 +172,21 @@ function draw() {
                 ctx.stroke();
                 ctx.closePath();
 
+                let thisImg = (l.team === 0)?laserImagesBlue[Math.floor(picNum % 8)]:laserImagesRed[Math.floor(picNum % 8)];
+                const scaleX = 1;
+                const scaleY = l.radius / thisImg.height;
+                const xPos = l.location[0];
+                const yPos = l.location[1];
+                const pivotX = thisImg.width / 2;
+                const pivotY = thisImg.height;
+
+                ctx.save();
+                ctx.translate(xPos, yPos);
+                ctx.rotate(l.angle + i * (Math.PI * 2 / l.sides) + 0.25 * 2*Math.PI);
+                ctx.scale(scaleX, scaleY);
+                ctx.drawImage(thisImg, -pivotX, -pivotY);
+                ctx.restore();
+
                 ctx.beginPath();
                 ctx.arc(l.location[0], l.location[1], 10, 0, Math.PI * 2);
                 ctx.fillStyle = 'white';
