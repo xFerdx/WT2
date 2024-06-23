@@ -15,7 +15,7 @@ const bgImage = new Image();
 bgImage.src = './Background/bg2.jpg';
 
 const deadImage = new Image();
-deadImage.src = './assets/dead.png';
+deadImage.src = './assets/dead.png';  
 
 let picNum = 1;
 
@@ -27,7 +27,7 @@ socket.addEventListener('message', function (event) {
     const data = JSON.parse(event.data);
 
     switch (data.type) {
-        case 'mapUpdate':
+        case 'mapUpdate': 
             map = data.message;
             break;
         case 'playersUpdate':
@@ -35,6 +35,7 @@ socket.addEventListener('message', function (event) {
             break;
         case 'startGame':
             inGame = true;
+            document.getElementById('queue-status').style.display='none';
             showGame();
             break;
         default:
@@ -57,6 +58,30 @@ function sendRequestJoin(userName, playerNumber){
         playerNumber: playerNumber
     };
     socket.send(JSON.stringify(payload));
+}
+
+function setUsername() {
+    username = document.getElementById('username').value;
+    if(username) {
+        socket.send(JSON.stringify({
+            type:'setUsername',
+            userName: username
+        }));
+        
+        document.getElementById('nameInputSection').style.display='none';
+        document.getElementById('game-mode-selection').style.display = 'block';
+
+    }
+}
+function selectGameMode(gameMode) {
+    if(username) {
+        socket.send(JSON.stringify({
+            type: 'selectGameMode',
+            gameMode: gameMode
+        }));
+        document.getElementById('game-mode-selection').style.display = 'none';
+        document.getElementById('queue-status').style.display = 'block';
+    }
 }
 
 let players = [];
@@ -158,6 +183,7 @@ function draw() {
             }
         }
     });
+    // map.powerups.foreach { }
 
 
 
