@@ -1,21 +1,37 @@
-const socket = new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://192.168.0.108:8080');//new WebSocket('ws://localhost:8080');
 
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
 
 let inGame = false;
 
-//document.getElementById('preLobby').style.display = 'block';
-//document.getElementById('game').style.display = 'none';
+const laserImagesBlue = [];
+const laserImagesRed = [];
+for (let i = 1; i < 9; i++) {
+    let lb = new Image();
+    let lr = new Image();
+    lb.src = '/LaserBeam/blue/laser_A_' + i + '.png';
+    lr.src = '/LaserBeam/red/laser_A_' + i + '.png';
+    laserImagesBlue.push(lb);
+    laserImagesRed.push(lr);
+}
 
-const laserImageBlue = new Image();
-const laserImageRed = new Image();
+const shockEffects = [];
+for (let i = 1; i < 10; i++) {
+    let s = new Image();
+    s.src = '/Effects/'+i+".png";
+    shockEffects.push(s);
+}
+
+
+console.log(window.innerHeight)
+console.log(window.innerWidth)
 
 const bgImage = new Image();
-bgImage.src = './Background/bg2.jpg';
+bgImage.src = '/Background/bg2.jpg';
 
 const deadImage = new Image();
-deadImage.src = './assets/dead.png';  
+deadImage.src = '/assets/dead.png';
 
 let picNum = 1;
 
@@ -51,11 +67,12 @@ function sendKey(key, pressed){
     socket.send(JSON.stringify(payload));
 }
 
-function sendRequestJoin(userName, playerNumber){
+function sendRequestJoin(userName, playerNumber, ability){
     const payload = {
         type: 'requestJoin',
         userName: userName,
-        playerNumber: playerNumber
+        playerNumber: playerNumber,
+        ability: ability
     };
     socket.send(JSON.stringify(payload));
 }
@@ -108,17 +125,36 @@ function draw() {
         ctx.fill();
         ctx.closePath();
         if(p.status === "DEAD")ctx.drawImage(deadImage, p.xPos-15, p.yPos-15,30,30);
+        if(p.status === "STUNNED")ctx.drawImage(shockEffects[Math.floor((picNum % 3)+1)], p.xPos-15, p.yPos-15,32,32);
+        if(p.ability.activated && p.ability.abilityName === "stunner")ctx.drawImage(shockEffects[Math.floor((picNum % 18)/2)], p.xPos - 50, p.yPos - 50, 100, 100);
+        if(p.ability.activated && p.ability.abilityName === "hunter"){
+            ctx.beginPath();
+            ctx.moveTo(p.xPos, p.yPos);
+            ctx.lineTo(p.ability.setPointX, p.ability.setPointY);
+            ctx.strokeStyle = 'green';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.closePath();
+        }
 
+        let abilityPercent;
+        if(p.ability.activated){
+            abilityPercent = p.ability.currentDuration / p.ability.duration;
+        }else{
+            abilityPercent = (p.ability.coolDownTime - p.ability.currentCoolDownTime) / p.ability.coolDownTime;
+        }
         ctx.beginPath();
-        ctx.arc(p.xPos, p.yPos, p.radius+2, 0, Math.PI * 1.5);
+        ctx.arc(p.xPos, p.yPos, p.radius+2, 0, Math.PI * 2 * abilityPercent);
         ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
         ctx.stroke();
         ctx.closePath();
-        if(p.status === "DEAD")ctx.drawImage(deadImage, p.xPos-15, p.yPos-15,30,30);
 
         ctx.fillStyle = 'white';
         ctx.font = "12px Arial";
         ctx.fillText(p.name, p.xPos - p.name.length * 4, p.yPos-p.radius-3);
+
+
     });
 
 
@@ -128,6 +164,7 @@ function draw() {
         if(l.team === -1) {
             ctx.beginPath();
             ctx.arc(l.location[0], l.location[1], 10, 0, Math.PI * 2);
+            ctx.lineWidth = 2;
             ctx.strokeStyle = 'white';
             ctx.stroke();
 
@@ -139,6 +176,7 @@ function draw() {
                 ctx.moveTo(l.location[0], l.location[1]);
                 ctx.lineTo(px, py);
                 ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
                 ctx.stroke();
                 ctx.closePath();
 
@@ -147,8 +185,6 @@ function draw() {
                 ctx.stroke();
             }
         }else{
-            laserImageBlue.src = './LaserBeam/blue/laser_A_'+Math.floor(picNum)+'.png';
-            laserImageRed.src = './LaserBeam/red/laser_A_'+Math.floor(picNum)+'.png';
             for (let i = 0; i < l.sides; i++) {
                 let px = l.location[0] + Math.cos(l.angle + i * (Math.PI * 2 / l.sides)) * l.radius;
                 let py = l.location[1] + Math.sin(l.angle + i * (Math.PI * 2 / l.sides)) * l.radius;
@@ -161,13 +197,14 @@ function draw() {
                 ctx.stroke();
                 ctx.closePath();
 
-                let thisImg = (l.team === 0)?laserImageBlue:laserImageRed;
+                let thisImg = (l.team === 0)?laserImagesBlue[Math.floor(picNum % 8)]:laserImagesRed[Math.floor(picNum % 8)];
                 const scaleX = 1;
                 const scaleY = l.radius / thisImg.height;
                 const xPos = l.location[0];
                 const yPos = l.location[1];
                 const pivotX = thisImg.width / 2;
                 const pivotY = thisImg.height;
+
                 ctx.save();
                 ctx.translate(xPos, yPos);
                 ctx.rotate(l.angle + i * (Math.PI * 2 / l.sides) + 0.25 * 2*Math.PI);
@@ -192,19 +229,12 @@ function draw() {
     ctx.fillText("fps: "+fps,30,40);
 
     picNum+= 0.2;
-    if(picNum>=9)picNum = 1;
 
     if(!inGame)
         console.log("ret");
     else
         requestAnimationFrame(draw);
-
-
-
-
-
 }
-
 
 document.addEventListener('keydown', (e) => {
     if(!inGame)return;
@@ -234,12 +264,12 @@ window.addEventListener('blur', (event) => {
 function requestJoin(){
     let userName = document.getElementById('userName').value;
     let playerNumber = document.getElementById('playerNumber').value;
-    sendRequestJoin(userName, playerNumber);
+    let ability = document.getElementById('ability').value;
+    sendRequestJoin(userName, playerNumber, ability);
 }
 
 function showGame(){
     console.log("showed")
-    //document.getElementById('preLobby').style.display = 'none';
-    //document.getElementById('game').style.display = 'block';
+    document.getElementById('joinButton').disabled = true;
     requestAnimationFrame(draw);
 }
