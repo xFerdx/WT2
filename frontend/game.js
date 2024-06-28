@@ -33,7 +33,8 @@ bgImage.src = '/Background/bg2.jpg';
 const deadImage = new Image();
 deadImage.src = '/assets/dead.png';
 
-let picNum = 1;
+let picInc = 1;
+let incrementingCounter = 0;
 
 socket.addEventListener('open', function (event) {
     console.log('Connected to WebSocket server');
@@ -79,18 +80,20 @@ function sendRequestJoin(userName, playerNumber, ability){
 let players = [];
 let map;
 
-let dings = 0;
-let now = Date.now();
+let now = performance.now();
+let fpsSum = 0;
+let fps = 0;
 
 function draw() {
-    dings++;
-    if(dings % 1000 === 0)console.log(players);
-    let fps = Math.round(1000/(Date.now()-now));
-    now = Date.now();
-
+    if(incrementingCounter % 1000 === 0)console.log(players);
+    fpsSum += Math.round(1000000/(performance.now()*1000-now*1000));
+    now = performance.now();
+    if(Math.round(incrementingCounter) % 10 === 0){
+        fps = Math.round(fpsSum/10);
+        fpsSum = 0;
+    }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     ctx.drawImage(bgImage, 0,0, 1900, 900);
 
     players.forEach(p => {
@@ -100,8 +103,8 @@ function draw() {
         ctx.fill();
         ctx.closePath();
         if(p.status === "DEAD")ctx.drawImage(deadImage, p.xPos-15, p.yPos-15,30,30);
-        if(p.status === "STUNNED")ctx.drawImage(shockEffects[Math.floor((picNum % 3)+1)], p.xPos-15, p.yPos-15,32,32);
-        if(p.ability.activated && p.ability.abilityName === "stunner")ctx.drawImage(shockEffects[Math.floor((picNum % 18)/2)], p.xPos - 50, p.yPos - 50, 100, 100);
+        if(p.status === "STUNNED")ctx.drawImage(shockEffects[Math.floor((picInc % 3)+1)], p.xPos-15, p.yPos-15,32,32);
+        if(p.ability.activated && p.ability.abilityName === "stunner")ctx.drawImage(shockEffects[Math.floor((picInc % 18)/2)], p.xPos - 50, p.yPos - 50, 100, 100);
         if(p.ability.activated && p.ability.abilityName === "hunter"){
             ctx.beginPath();
             ctx.moveTo(p.xPos, p.yPos);
@@ -131,10 +134,8 @@ function draw() {
 
 
     });
-
-
-    if(map !== undefined)
-    map.lasers.forEach(l => {
+    
+    map && map.lasers.forEach(l => {
         if(l.startTime !== 0)return;
         if(l.team === -1) {
             ctx.beginPath();
@@ -172,7 +173,7 @@ function draw() {
                 ctx.stroke();
                 ctx.closePath();
 
-                let thisImg = (l.team === 0)?laserImagesBlue[Math.floor(picNum % 8)]:laserImagesRed[Math.floor(picNum % 8)];
+                let thisImg = (l.team === 0)?laserImagesBlue[Math.floor(picInc % 8)]:laserImagesRed[Math.floor(picInc % 8)];
                 const scaleX = 1;
                 const scaleY = l.radius / thisImg.height;
                 const xPos = l.location[0];
@@ -202,7 +203,8 @@ function draw() {
     ctx.font = "30px Arial";
     ctx.fillText("fps: "+fps,30,40);
 
-    picNum+= 0.2;
+    picInc+= 0.2;
+    incrementingCounter++;
 
     if(!inGame)
         console.log("ret");
@@ -212,19 +214,19 @@ function draw() {
 
 document.addEventListener('keydown', (e) => {
     if(!inGame)return;
-    if (e.code === "KeyA") sendKey('A', true);
-    if (e.code === "KeyD") sendKey('D', true);
-    if (e.code === "KeyS") sendKey('S', true);
-    if (e.code === "KeyW") sendKey('W', true);
+    if (e.code === "KeyA" || e.code === "ArrowLeft") sendKey('A', true);
+    if (e.code === "KeyD" || e.code === "ArrowRight") sendKey('D', true);
+    if (e.code === "KeyS" || e.code === "ArrowDown") sendKey('S', true);
+    if (e.code === "KeyW" || e.code === "ArrowUp") sendKey('W', true);
     if (e.code === "Space") sendKey('SPACE', true);
 });
 
 document.addEventListener('keyup', (e) => {
     if(!inGame)return;
-    if (e.code === "KeyA") sendKey('A', false);
-    if (e.code === "KeyD") sendKey('D', false);
-    if (e.code === "KeyS") sendKey('S', false);
-    if (e.code === "KeyW") sendKey('W', false);
+    if (e.code === "KeyA" || e.code === "ArrowLeft") sendKey('A', false);
+    if (e.code === "KeyD" || e.code === "ArrowRight") sendKey('D', false);
+    if (e.code === "KeyS" || e.code === "ArrowDown") sendKey('S', false);
+    if (e.code === "KeyW" || e.code === "ArrowUp") sendKey('W', false);
 });
 
 window.addEventListener('blur', (event) => {

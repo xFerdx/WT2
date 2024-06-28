@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div id="game">
+    <canvas id="myCanvas" width="500" height="500"></canvas>
+</div>
+
+<script>
+
+
+
+    const canvas = document.getElementById('myCanvas');
+    let ctx = canvas.getContext('2d');
+    let now = performance.now();
+
+    let fpsOutputTimer = 0;
+    let fpsSum = 0;
+    let fps = 0;
+    function draw(){
+        fpsSum += Math.round(1000000/(performance.now()*1000-now*1000));
+        now = performance.now();
+        if(fpsOutputTimer % 10 === 0){
+            fps = Math.round(fpsSum/10);
+            fpsSum = 0;
+        }
+        fpsOutputTimer++;
+
+        ctx.clearRect(0, 0, 500, 500);
+        ctx.fillStyle = 'green';
+        ctx.font = "30px Arial";
+        ctx.fillText("fps: "+fps,30,40);
+        requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
+
+
+</script>
+</body>
+</html>
