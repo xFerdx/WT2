@@ -1,5 +1,5 @@
-const socket = new WebSocket('ws://192.168.0.108:8080');//new WebSocket('ws://localhost:8080');
-
+//const socket = new WebSocket('ws://192.168.0.108:8080');//new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://localhost:8080');
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
 
@@ -92,6 +92,7 @@ function setUsername() {
 }
 function selectGameMode(gameMode) {
     if(username) {
+        
         socket.send(JSON.stringify({
             type: 'selectGameMode',
             gameMode: gameMode
@@ -99,6 +100,17 @@ function selectGameMode(gameMode) {
         document.getElementById('game-mode-selection').style.display = 'none';
         document.getElementById('queue-status').style.display = 'block';
     }
+}
+function selectAbility(ability) {
+    if(username) {
+        socket.send(JSON.stringify({
+            type: 'selectAbility',
+            ability: ability
+        }));  
+        document.getElementById('ability-selection').style.display='none';
+
+    }
+
 }
 
 let players = [];
@@ -270,6 +282,9 @@ function requestJoin(){
 
 function showGame(){
     console.log("showed")
-    document.getElementById('joinButton').disabled = true;
+    document.getElementById('enterLobby').disabled = true;
+    document.getElementById('game-mode-selection').disabled = true;
+    //document.getElementById('ability-selection').disabled = true;
+   
     requestAnimationFrame(draw);
 }
