@@ -11,8 +11,8 @@ import {Player} from "./Player.js";
 import {MapFactory, Map} from "./Map.js";
 
 console.log("server started")
-const wss = new WebSocketServer({ port: 8081
- });
+//const wss = new WebSocketServer({ port: 8081});
+const wss = new WebSocketServer({ port: 8080, host: '0.0.0.0' });
 
 let lobbies = [];
 
