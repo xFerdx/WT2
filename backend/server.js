@@ -23,6 +23,54 @@ let queues = {
     '4v4': []
 };
 
+import http from "http";
+import fs from 'fs';
+import * as path from "path";
+
+const server = http.createServer((req, res) => {
+    const basePath = path.resolve().replace("backend","frontend");
+    const filePath = path.join(basePath, req.url === '/' ? 'game.html' : req.url);
+    const extname = path.extname(filePath).toLowerCase();
+    const mimeTypes = {
+        '.html': 'text/html',
+        '.js': 'application/javascript',
+        '.css': 'text/css',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpg',
+        '.gif': 'image/gif',
+        '.wav': 'audio/wav',
+        '.mp4': 'video/mp4',
+        '.woff': 'application/font-woff',
+        '.ttf': 'application/font-ttf',
+        '.eot': 'application/vnd.ms-fontobject',
+        '.otf': 'application/font-otf',
+        '.svg': 'application/image/svg+xml'
+    };
+    console.log(filePath);
+    fs.readFile(filePath, (err, content) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('Not Found', 'utf-8');
+            } else {
+                res.writeHead(500);
+                res.end(`Server Error: ${err.code}`, 'utf-8');
+            }
+        } else {
+            const contentType = mimeTypes[extname] || 'application/octet-stream';
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(content, 'utf-8');
+        }
+    });
+});
+
+server.listen(8081, '0.0.0.0', () => {
+    console.log(`Server is listening on http://0.0.0.0:8081`);
+});
+
+
+
 
 lobbies.push(new Lobby(true));
 
