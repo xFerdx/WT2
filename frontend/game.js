@@ -1,4 +1,4 @@
-const socket = new WebSocket('ws://192.168.0.3:8081');//new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://192.168.0.3:8080');//new WebSocket('ws://localhost:8080');
 
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
