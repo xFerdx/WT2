@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Client</title>
+
+
+
 </head>
 <body>
 
@@ -26,10 +29,11 @@
     <label for="userName">Username:</label>
     <input type="text" id="userName" name="userName" placeholder="Enter your username">
     <button type="button" id="joinButton" onclick="requestJoin()">Join</button>
+    <button type="button" id="requestFS" onclick="requestFS()">FS</button>
 </div>
 
 <div id="game">
-    <canvas id="myCanvas" width="1900" height="900"></canvas>
+    <canvas id="myCanvas" width="1920" height="1080"></canvas>
 </div>
 
 <script src="game.js"></script>

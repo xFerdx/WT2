@@ -2,7 +2,6 @@ import { WebSocketServer } from 'ws';
 import {lobbyStates, Lobby} from './Lobby.js';
 import {User} from './User.js';
 import {Player} from "./Player.js";
-import {MapFactory, Map} from "./Map.js";
 import {AbilityStunner, AbilityHunter, AbilityThief, AbilityImmortal} from "./Ability.js";
 
 import http from "http";
@@ -68,9 +67,6 @@ function mainLoop() {
     t = Date.now();
     update();
     sendData();
-    //for (let i = 0; i < lobbies.length; i++)
-        //console.log("lobby "+i+" : "+lobbies[i].users.length);
-
 
 }
 
@@ -79,6 +75,8 @@ setInterval(mainLoop, 10);
 wss.on('connection', function connection(ws) {
     console.log('A client connected.');
     lobbies[0].users.push(new User(ws));
+    for (let i = 0; i < lobbies.length; i++)
+        console.log("lobby "+i+" : "+lobbies[i].users.length);
 
     ws.on('message', function incoming(message) {
         const data = JSON.parse(message);
@@ -86,12 +84,14 @@ wss.on('connection', function connection(ws) {
 
         switch (data.type) {
             case 'pressedKey': {
-                let user = findUser(ws);
+                let user = findUserOfWS(ws);
+                if(!user.player)return;
                 user.player.keyPressed(data.message);
                 break;
             }
             case 'releasedKey': {
-                let user = findUser(ws);
+                let user = findUserOfWS(ws);
+                if(!user.player)return;
                 user.player.keyReleased(data.message);
                 break;
             }
@@ -108,11 +108,13 @@ wss.on('connection', function connection(ws) {
     ws.on('close', function close() {
         console.log('A client disconnected.');
         deleteWSFromLobby(ws);
+        for (let i = 0; i < lobbies.length; i++)
+            console.log("lobby "+i+" : "+lobbies[i].users.length);
     });
 
 });
 
-function findUser(webSocket){
+function findUserOfWS(webSocket){
     for (let l of lobbies) {
         for (let u of l.users) {
             if (u.websocket === webSocket) {
@@ -123,7 +125,7 @@ function findUser(webSocket){
     return null;
 }
 
-function findLobby(user){
+function findLobbyOfUser(user){
     for (let l of lobbies) {
         for (let u of l.users) {
             if (u === user) {
@@ -135,14 +137,14 @@ function findLobby(user){
 }
 
 function deleteWSFromLobby(ws){
-    let user = findUser(ws);
-    let lobby = findLobby(user);
+    let user = findUserOfWS(ws);
+    let lobby = findLobbyOfUser(user);
     let idx = lobby.users.indexOf(user);
     lobby.users.splice(idx,1);
 }
 
 function joinLobby(ws, playerNumber, userName, ability){
-    let user = findUser(ws);
+    let user = findUserOfWS(ws);
     let abilityObject;
     switch (ability){
         case "hunter":
@@ -168,6 +170,8 @@ function joinLobby(ws, playerNumber, userName, ability){
             continue;
         deleteWSFromLobby(ws);
         lobbies[i].users.push(user);
+        for (let i = 0; i < lobbies.length; i++)
+            console.log("lobby "+i+" : "+lobbies[i].users.length);
         return;
     }
 
@@ -175,35 +179,27 @@ function joinLobby(ws, playerNumber, userName, ability){
     let lobby = new Lobby(false, playerNumber * 2);
     lobby.users.push(user);
     lobbies.push(lobby);
+    for (let i = 0; i < lobbies.length; i++)
+        console.log("lobby "+i+" : "+lobbies[i].users.length);
 }
 
-function startLobby(lobby){
-    lobby.users.forEach((u, idx) => {
-        u.player.team = idx % 2;
-        u.player.xPos = Map.xMax * (idx % 2 === 0? 0.1 : 0.9);
-        u.player.yPos = Map.yMax / (Math.floor(lobby.users.length/2)+1) * (Math.floor(idx/2)+1);
-    });
-    lobby.map = MapFactory.map1();
-    lobby.status = lobbyStates.RUNNING;
-    lobby.users.forEach(u => {
-       sendStartGame(u.websocket);
-    });
-}
 
-function closeLobby(idx){
-    lobbies[idx].users.forEach(u => {
-       u.player = null;
-    });
-    lobbies[0].users.concat(lobbies[idx].users);
-    lobbies.splice(idx, 1);
-}
 
 function update(){
     lobbies.forEach((l, idx) => {
         if(idx === 0)return;
         if(l.users.length === 0)lobbies.splice(idx, 1);
-        if(l.maxPlayers === l.users.length && l.status !== lobbyStates.RUNNING)startLobby(l);
+        if(l.maxPlayers === l.users.length && l.status !== lobbyStates.RUNNING)l.startGame();
         if(l.status !== lobbyStates.RUNNING)return;
+
+        if(l.checkIfTeamWon()){
+            l.closeLobby(lobbies, idx)
+            l.users.forEach(u => {
+                sendEndGame(u.websocket);
+            });
+            return;
+        }
+        l.checkAllPlayerDead();
 
         l.users.forEach(u => {
             u.player.updateLocation(l.map);
@@ -228,6 +224,7 @@ function sendData(){
            const allP = [].concat(...p);
            sendPlayers(u.websocket, allP);
            sendMap(u.websocket, l.map);
+           sendScores(u.websocket, [l.scoreTeam1, l.scoreTeam2]);
        });
 
     });
@@ -249,17 +246,19 @@ function sendPlayers(ws, players){
     ws.send(JSON.stringify(payload));
 }
 
-function sendStartGame(ws){
+function sendScores(ws, score){
     const payload = {
-        type: 'startGame'
+        type: 'scoreUpdate',
+        message: score
     };
     ws.send(JSON.stringify(payload));
 }
 
-
-
-
-
-
+function sendEndGame(ws){
+    const payload = {
+        type: 'endGame'
+    };
+    ws.send(JSON.stringify(payload));
+}
 
 

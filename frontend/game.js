@@ -2,6 +2,10 @@ const socket = new WebSocket('ws://192.168.0.108:8080');//new WebSocket('ws://lo
 
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
+canvas.width = window.screen.width;
+canvas.height = window.screen.height;
+const notFSBuffer = [0.99,0.96]
+ctx.scale(window.innerWidth/1920 * notFSBuffer[0],window.innerHeight/1080 * notFSBuffer[1]);
 
 let inGame = false;
 
@@ -23,9 +27,8 @@ for (let i = 1; i < 10; i++) {
     shockEffects.push(s);
 }
 
-
-console.log(window.innerHeight)
-console.log(window.innerWidth)
+document.body.style.overflow = 'hidden';
+document.documentElement.style.overflow = 'hidden';
 
 const bgImage = new Image();
 bgImage.src = '/Background/bg2.jpg';
@@ -50,9 +53,16 @@ socket.addEventListener('message', function (event) {
         case 'playersUpdate':
             players = data.message;
             break;
+        case 'scoreUpdate':
+            scores = data.message;
+            break;
         case 'startGame':
             inGame = true;
             showGame();
+            break;
+        case 'endGame':
+            inGame = false;
+            closeGame();
             break;
         default:
             console.log("Unknown message type:", data.type);
@@ -79,6 +89,7 @@ function sendRequestJoin(userName, playerNumber, ability){
 
 let players = [];
 let map;
+let scores = [0,0];
 
 let now = performance.now();
 let fpsSum = 0;
@@ -93,8 +104,8 @@ function draw() {
         fpsSum = 0;
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bgImage, 0,0, 1900, 900);
+    ctx.clearRect(0, 0, canvas.width+10, canvas.height+10);
+    ctx.drawImage(bgImage, 0,0, canvas.width, canvas.height);
 
     players.forEach(p => {
         ctx.beginPath();
@@ -203,12 +214,19 @@ function draw() {
     ctx.font = "30px Arial";
     ctx.fillText("fps: "+fps,30,40);
 
+    ctx.fillStyle = 'blue';
+    ctx.font = "30px Arial";
+    ctx.fillText(scores[0],canvas.width/2 - 21,40);
+    ctx.fillStyle = 'white';
+    ctx.fillText("|",canvas.width/2, 40);
+    ctx.fillStyle = 'red';
+    ctx.fillText(scores[1],canvas.width/2 + 10,40);
+
     picInc+= 0.2;
     incrementingCounter++;
 
-    if(!inGame)
-        console.log("ret");
-    else
+
+    if(inGame)
         requestAnimationFrame(draw);
 }
 
@@ -244,8 +262,35 @@ function requestJoin(){
     sendRequestJoin(userName, playerNumber, ability);
 }
 
+function requestFS(){
+    let element = document.getElementById('myCanvas');
+
+    if (element.requestFullscreen)
+        element.requestFullscreen();
+     else if (element.mozRequestFullScreen)
+        element.mozRequestFullScreen();
+     else if (element.webkitRequestFullscreen)
+        element.webkitRequestFullscreen();
+     else if (element.msRequestFullscreen)
+        element.msRequestFullscreen();
+
+}
+
+document.addEventListener('fullscreenchange', function() {
+    if (document.fullscreenElement) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }else{
+        ctx.scale(window.innerWidth/1920 * notFSBuffer[0],window.innerHeight/1080 * notFSBuffer[1]);
+    }
+});
+
 function showGame(){
-    console.log("showed")
     document.getElementById('joinButton').disabled = true;
+    document.getElementById('myCanvas').style.display = 'block';
     requestAnimationFrame(draw);
+}
+
+function closeGame(){
+    document.getElementById('joinButton').disabled = false;
+    document.getElementById('myCanvas').style.display = 'none';
 }

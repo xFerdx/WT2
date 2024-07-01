@@ -6,7 +6,7 @@ export class Map{
     powerUps = [];
 
     static xMax = 1920;
-    static yMax = 969;
+    static yMax = 1080;
 
 }
 
