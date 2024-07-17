@@ -9,6 +9,14 @@ import {lobbyStates, Lobby} from './Lobby.js';
 import {User} from './User.js';
 import {Player} from "./Player.js";
 import {MapFactory, Map} from "./Map.js";
+import {AbilityStunner, AbilityHunter, AbilityThief, AbilityImmortal} from "./Ability.js";
+
+import http from "http";
+import fs from 'fs';
+import * as path from "path";
+
+
+
 
 console.log("server started")
 //const wss = new WebSocketServer({ port: 8081});
@@ -22,10 +30,8 @@ let queues = {
     '3v3': [],
     '4v4': []
 };
+let t = Date.now();
 
-import http from "http";
-import fs from 'fs';
-import * as path from "path";
 
 const server = http.createServer((req, res) => {
     const basePath = path.resolve().replace("backend","frontend");
@@ -70,16 +76,20 @@ server.listen(8081, '0.0.0.0', () => {
 });
 
 
+console.log("server started")
 
 
 lobbies.push(new Lobby(true));
 
 function mainLoop() {
+    //console.log(Date.now()-t);
+    t = Date.now();
     update();
     sendData();
-    for (let i = 0; i < lobbies.length; i++) {
-        console.log("lobby "+i+" : "+lobbies[i].users.length);
-    }
+    //for (let i = 0; i < lobbies.length; i++)
+        //console.log("lobby "+i+" : "+lobbies[i].users.length);
+
+
 }
 
 setInterval(mainLoop, 10);
@@ -104,7 +114,7 @@ wss.on('connection', function connection(ws) {
                 break;
             }
             case 'requestJoin': {
-                joinLobby(ws, data.playerNumber, data.userName)
+                joinLobby(ws, data.playerNumber, data.userName, data.ability)
                 break;
             }
             case 'setUsername': {
@@ -113,12 +123,7 @@ wss.on('connection', function connection(ws) {
                 break;
             }
             case 'selectGameMode': {
-                enqueueUser(ws, data.gameMode);
-                break;
-            }
-            case 'selectAbility': {
-                let user = findUser(ws);
-                user.player.ability = data.message.ability;
+                enqueueUser(ws, data.gameMode, data.ability);
                 break;
             }
             default:
@@ -134,6 +139,29 @@ wss.on('connection', function connection(ws) {
     });
 
 });
+
+function selectAbility(ability) {
+    
+    let abilityObject;
+    switch (ability){
+        case "hunter":
+            abilityObject = new AbilityHunter();
+            break;
+        case "stunner":
+            abilityObject = new AbilityStunner();
+            break;
+        case "immortal":
+            abilityObject = new AbilityImmortal();
+            break;
+        case "thief":
+            abilityObject = new AbilityThief();
+            break;
+        default:
+            abilityObject = null;
+    }
+ return abilityObject;
+    
+}
 
 function findUser(webSocket){
     for (let l of lobbies) {
@@ -156,12 +184,12 @@ function findLobby(user){
     }
     return null;
 }
-function enqueueUser(ws, gameMode) {
+function enqueueUser(ws, gameMode, ability) {
     let user = findUser(ws);
     if(!user) return;
     removeFromQueue(ws); //user ist nicht im queue
     queues[gameMode].push(user);
-    processQueue(gameMode);
+    processQueue(gameMode, ability);
 }
 
 function removeFromQueue(ws) {
@@ -173,13 +201,14 @@ function removeFromQueue(ws) {
     }
 }
 
-function processQueue(gameMode) {
+function processQueue(gameMode,ability) {
     const modeSize =parseInt(gameMode.split('v')[0]) *2; /////////////////////
     if(queues[gameMode].length >= modeSize) {
        let newLobby = new Lobby(false, modeSize);
        for(let i=0; i<modeSize; i++) {
         let user = queues[gameMode].shift();
-        user.player = new Player(100,100,6.5,20,0,user.name,null);
+        let playerAbility = selectAbility(ability)
+        user.player = new Player(100,100,6.5,20,0,user.name, playerAbility);
         newLobby.users.push(user);
        }
        lobbies.push(newLobby);
@@ -197,13 +226,30 @@ function deleteWSFromLobby(ws){
     lobby.users.splice(idx,1);
 }
 
-function joinLobby(ws, playerNumber, userName){
+function joinLobby(ws, playerNumber, userName, ability){
     let user = findUser(ws);
-    console.log(user);
-    user.player = new Player(100,100,6.5,20,0,userName,null);
+    let abilityObject;
+    switch (ability){
+        case "hunter":
+            abilityObject = new AbilityHunter();
+            break;
+        case "stunner":
+            abilityObject = new AbilityStunner();
+            break;
+        case "immortal":
+            abilityObject = new AbilityImmortal();
+            break;
+        case "thief":
+            abilityObject = new AbilityThief();
+            break;
+        default:
+            abilityObject = null;
+    }
+
+    user.player = new Player(100,100,6.5,20,0,userName,abilityObject);
 
     for (let i = 0; i < lobbies.length; i++) {
-        if(playerNumber * 2 !== lobbies[i].maxPlayers || lobbies[i].users.length === lobbies[i].maxPlayers || i === 0)
+        if(playerNumber * 2 !== lobbies[i].maxPlayers || lobbies[i].users.length === lobbies[i].maxPlayers || lobbies[i].status !== lobbyStates.WAITING|| i === 0)
             continue;
         deleteWSFromLobby(ws);
         lobbies[i].users.push(user);
@@ -219,8 +265,8 @@ function joinLobby(ws, playerNumber, userName){
 function startLobby(lobby){
     lobby.users.forEach((u, idx) => {
         u.player.team = idx % 2;
-        u.player.xPos = Map.xMin + (Map.xMax - Map.xMin) * (idx % 2 === 0? 0.1 : 0.9);
-        u.player.yPos = Map.yMin + (Map.yMax - Map.yMin) / (Math.floor(lobby.users.length/2)+1) * (Math.floor(idx/2)+1);
+        u.player.xPos = Map.xMax * (idx % 2 === 0? 0.1 : 0.9);
+        u.player.yPos = Map.yMax / (Math.floor(lobby.users.length/2)+1) * (Math.floor(idx/2)+1);
     });
     lobby.map = MapFactory.map1();
     lobby.status = lobbyStates.RUNNING;
@@ -237,20 +283,6 @@ function closeLobby(idx){
     lobbies.splice(idx, 1);
 }
 
-function update(){
-    lobbies.forEach((l, idx) => {
-        if(idx === 0)return;
-        if(l.users.length === 0)lobbies.splice(idx, 1);
-        if(l.maxPlayers === l.users.length && l.status !== lobbyStates.RUNNING)startLobby(l);
-        if(l.status !== lobbyStates.RUNNING)return;
-        l.users.forEach(u => {
-            u.player.updateLocation(l.map);
-            u.player.checkLaserCollision(l.map);
-            u.player.checkLaserActivation(l.map);
-        });
-        l.map.lasers.forEach(la => {
-            la.update();
-        });
 
 // updatePowersups
 // wenn beruhrt dann wird aktiviert 
@@ -263,9 +295,25 @@ checkLaserActivation(map){ check powerup activation wenn als kreis
             l.team = this.team;
     });
 } */
+function update(){
+    lobbies.forEach((l, idx) => {
+        if(idx === 0)return;
+        if(l.users.length === 0)lobbies.splice(idx, 1);
+        if(l.maxPlayers === l.users.length && l.status !== lobbyStates.RUNNING)startLobby(l);
+        if(l.status !== lobbyStates.RUNNING)return;
 
+        l.users.forEach(u => {
+            u.player.updateLocation(l.map);
+            u.player.checkLaserCollision(l.map);
+            u.player.checkLaserActivation(l.map);
+            u.player.ability.update(l.map, l.users.map(user => user.player), u.player);
+            u.player.updateEffects();
+        });
 
-    
+        l.map.lasers.forEach(lasers => {
+            lasers.update();
+        });
+
     });
 }
 
@@ -273,7 +321,6 @@ function sendData(){
     lobbies.forEach((l, idx) => {
        if(idx === 0 || l.status !== lobbyStates.RUNNING)return;
        l.users.forEach(u => {
-           console.log("sended");
            const p = l.users.map(user => user.player);
            const allP = [].concat(...p);
            sendPlayers(u.websocket, allP);
@@ -290,7 +337,6 @@ function sendMap(ws, map){
     };
     ws.send(JSON.stringify(payload));
 }
-
 function sendPlayers(ws, players){
     const payload = {
         type: 'playersUpdate',

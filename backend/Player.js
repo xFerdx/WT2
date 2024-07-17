@@ -95,6 +95,21 @@ export class Player{
                 l.team = this.team;
         });
     }
+    
+    checkPowerUpActivation(map) {
+        map.powerUps.forEach(p => {
+            if((this.radius + 10)**2 >= (this.xPos - p.location[0])**2 +  (this.yPos - p.location[1])**2) //check if they touch
+               p.activate();
+                //activatePowerUp
+
+            map.lasers.forEach(l => {
+              l.team = -1;
+            })
+        });
+
+        
+       
+    }
 
     checkLaserCollision(map){
         if(this.status === playerStates.IMMORTAL)return;
