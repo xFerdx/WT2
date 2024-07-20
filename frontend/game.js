@@ -1,11 +1,10 @@
-const socket = new WebSocket('ws://192.168.0.109:8080');//new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://192.168.0.107:8080');//new WebSocket('ws://localhost:8080');
 
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
 canvas.width = window.screen.width;
 canvas.height = window.screen.height;
 const notFSBuffer = [0.99,0.96]
-
 
 let inGame = false;
 
@@ -104,9 +103,8 @@ function draw() {
         fpsSum = 0;
     }
 
-
-    ctx.clearRect(0, 0, canvas.width+10, canvas.height+10);
-    ctx.drawImage(bgImage, 0,0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, 1920, 1080);
+    ctx.drawImage(bgImage, 0,0, 1920, 1080);
 
     players.forEach(p => {
         ctx.beginPath();
@@ -277,15 +275,20 @@ function requestFS(){
 
 }
 
-document.addEventListener('fullscreenchange', function() {
+document.addEventListener('fullscreenchange', fullScreenHandler);
+
+function fullScreenHandler(){
     if (document.fullscreenElement) {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(window.screen.width/1920,window.screen.height/1080);
     }else{
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(window.innerWidth/1920 * notFSBuffer[0],window.innerHeight/1080 * notFSBuffer[1]);
     }
-});
+}
 
 function showGame(){
+    fullScreenHandler();
     document.getElementById('joinButton').disabled = true;
     document.getElementById('myCanvas').style.display = 'block';
     requestAnimationFrame(draw);
