@@ -72,7 +72,8 @@ export class Player{
         }
     }
 
-    updateLocation(map){
+    updateLocation(){
+        if(this.status === playerStates.DEAD || this.status === playerStates.STUNNED)return;
         let upOrDown = this.up || this.down;
         let leftOrRight = this.left || this.right;
 
@@ -89,6 +90,7 @@ export class Player{
 
 
     checkLaserActivation(map){
+        if(this.status === playerStates.DEAD || this.status === playerStates.STUNNED) return;
         map.lasers.forEach(l =>{
             if(l.team !== -1 || l.startTime > 0)return;
             if((this.radius + 10)**2 >= (this.xPos - l.location[0])**2 +  (this.yPos - l.location[1])**2)
@@ -97,7 +99,7 @@ export class Player{
     }
 
     checkLaserCollision(map){
-        if(this.status === playerStates.IMMORTAL)return;
+        if(this.status === playerStates.IMMORTAL || this.status === playerStates.DEAD || this.status === playerStates.STUNNED)return;
         map.lasers.forEach(l => {
             if(l.team === -1 || l.team === this.team) return;
             for (let i = 0; i < l.sides; i++) {
@@ -134,6 +136,14 @@ export class Player{
         }else{
             this.status = playerStates.ALIVE;
         }
+    }
+
+    checkRevive(players){
+       players.forEach(p => {
+          if(p === this || p.team !== this.team || p.status !== playerStates.DEAD)return;
+          if((p.radius + this.radius)**2 >= (p.xPos - this.xPos)**2 + (p.yPos - this.yPos)**2)
+              p.status = playerStates.ALIVE;
+       });
     }
 
 

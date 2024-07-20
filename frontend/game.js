@@ -1,11 +1,11 @@
-const socket = new WebSocket('ws://192.168.0.108:8080');//new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://192.168.0.109:8080');//new WebSocket('ws://localhost:8080');
 
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
 canvas.width = window.screen.width;
 canvas.height = window.screen.height;
 const notFSBuffer = [0.99,0.96]
-ctx.scale(window.innerWidth/1920 * notFSBuffer[0],window.innerHeight/1080 * notFSBuffer[1]);
+
 
 let inGame = false;
 
@@ -103,6 +103,7 @@ function draw() {
         fps = Math.round(fpsSum/10);
         fpsSum = 0;
     }
+
 
     ctx.clearRect(0, 0, canvas.width+10, canvas.height+10);
     ctx.drawImage(bgImage, 0,0, canvas.width, canvas.height);

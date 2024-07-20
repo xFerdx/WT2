@@ -10,6 +10,7 @@ class Ability{
     activated = false;
 
     update(map, players, p){
+        if(p.status === playerStates.DEAD || p.status === playerStates.STUNNED) return;
         if(this.pressed) {
             if (this.activated) {
                 this.endOfAbility(map, players, p);

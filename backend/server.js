@@ -207,6 +207,7 @@ function update(){
             u.player.checkLaserActivation(l.map);
             u.player.ability.update(l.map, l.users.map(user => user.player), u.player);
             u.player.updateEffects();
+            u.player.checkRevive(l.users.map(user => user.player), u.player);
         });
 
         l.map.lasers.forEach(lasers => {
