@@ -99,7 +99,7 @@ export class Player{
     }
 
     checkLaserCollision(map){
-        if(this.status === playerStates.IMMORTAL || this.status === playerStates.DEAD || this.status === playerStates.STUNNED)return;
+        if(this.status === playerStates.IMMORTAL || this.status === playerStates.DEAD)return;
         map.lasers.forEach(l => {
             if(l.team === -1 || l.team === this.team) return;
             for (let i = 0; i < l.sides; i++) {

@@ -330,7 +330,7 @@ function requestJoin(playerNumber){
 
 function requestFS(){
     let element;
-    if(inGame)element = document.getElementById('myCanvas');
+    if(inGame)element = document.getElementById('game');
     else element = document.getElementById('frontPage');
 
     if (element.requestFullscreen)
@@ -399,8 +399,8 @@ function isMobileDevice() {
 function createTouchControls() {
     const controlContainer = document.createElement('div');
     controlContainer.style.position = 'fixed';
-    controlContainer.style.bottom = '30px';
-    //controlContainer.style.bottom = '50%';
+    controlContainer.style.bottom = '10px';
+    controlContainer.style.bottom = '20%';
     controlContainer.style.left = '10px';
     controlContainer.style.transform = 'translateY(0)';
     controlContainer.style.display = 'grid';
@@ -422,8 +422,8 @@ function createTouchControls() {
         const btn = document.createElement('button');
         btn.id = button.id;
         btn.innerHTML = button.label;
-        btn.style.padding = '30px';
-        btn.style.fontSize = '120px';
+        btn.style.padding = '5px';
+        btn.style.fontSize = '20px';
         btn.style.borderRadius = '0px';
         btn.style.backgroundColor = 'rgba(255, 255, 255, 0)';
         btn.style.border = '1px solid #000';
@@ -446,8 +446,8 @@ function createTouchControls() {
     const abilityBtn = document.createElement('button');
     abilityBtn.id = abilityButton.id;
     abilityBtn.innerHTML = abilityButton.label;
-    abilityBtn.style.padding = '30px';
-    abilityBtn.style.fontSize = '120px';
+    abilityBtn.style.padding = '5px';
+    abilityBtn.style.fontSize = '20px';
     abilityBtn.style.borderRadius = '0px';
     abilityBtn.style.backgroundColor = '#fff';
     abilityBtn.style.backgroundColor = 'rgba(255, 255, 255, 0)';
@@ -458,8 +458,8 @@ function createTouchControls() {
     abilityBtn.addEventListener('touchstart',()=>handleTouchStart(abilityButton.id));
     abilityBtn.addEventListener('touchend',()=>handleTouchEnd(abilityButton.id));
 
-    document.body.appendChild(controlContainer);
-    document.body.appendChild(abilityButtonDiv);
+    document.getElementById("game").appendChild(controlContainer);
+    document.getElementById("game").appendChild(abilityButtonDiv);
 }
 
 function handleTouchStart(direction) {

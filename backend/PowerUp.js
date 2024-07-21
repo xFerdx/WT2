@@ -5,16 +5,20 @@ export class PowerUp{
     y;
     speed;
     startTime;
+    initialStartTime;
+    lifeDuration;
+    initialLifeDuration;
     type;
     radius;
     direction;
-    initialStartTime;
     enabled;
 
 
-    constructor(startTime,x,y,type,radius,speed) {
+    constructor(startTime,lifeDuration,x,y,type,radius,speed) {
         this.startTime = startTime;
         this.initialStartTime = startTime;
+        this.lifeDuration = lifeDuration;
+        this.initialLifeDuration = lifeDuration;
         this.radius = radius;
         this.speed = speed;
         this.x = x;
@@ -31,22 +35,29 @@ export class PowerUp{
         if (this.x < 0 || this.x > Map.xMax) this.direction = Math.PI - this.direction;
         if (this.y < 0 || this.y > Map.yMax) this.direction = -this.direction;
 
-
-        if(this.startTime > 0) {
-            this.startTime--;
+        if(this.enabled){
+            if(this.lifeDuration > 0) {
+                this.lifeDuration--;
+            }else{
+                this.resetPowerUp();
+            }
         }else{
-            this.enabled = true;
+            if(this.startTime > 0) {
+                this.startTime--;
+            }else{
+                this.enabled = true;
+            }
         }
     }
 
     activateReset(map) {
-        this.collectPowerUp();
+        this.resetPowerUp();
         map.lasers.forEach(l => {
             l.team = -1;
         });
     }
     activateReverse(map) {
-        this.collectPowerUp();
+        this.resetPowerUp();
         map.lasers.forEach(l => {
             if (l.team === 1) {
                 l.team = 0;
@@ -57,8 +68,9 @@ export class PowerUp{
         });
     }
 
-    collectPowerUp(){
+    resetPowerUp(){
         this.startTime = this.initialStartTime;
+        this.lifeDuration = this.initialLifeDuration;
         this.enabled = false;
         this.direction = Math.random() * Math.PI * 2;
     }

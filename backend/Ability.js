@@ -47,7 +47,7 @@ class Ability{
 
 export class AbilityStunner extends Ability{
     abilityName = "stunner";
-    coolDownTime = 100;
+    coolDownTime = 700;
     duration = 18;
     currentCoolDownTime;
     currentDuration;
@@ -63,7 +63,7 @@ export class AbilityStunner extends Ability{
     activate(map, players, p){
         super.activate(map, players, p);
         players.forEach(pl => {
-           if(pl === p || pl.status === playerStates.DEAD || pl.status === playerStates.STUNNED )return;
+           if(pl.team === p.team || pl.status === playerStates.DEAD || pl.status === playerStates.STUNNED )return;
            if((pl.radius + this.range) ** 2 >= (pl.xPos - p.xPos)**2+(pl.yPos - p.yPos)**2){
                pl.status = playerStates.STUNNED;
                pl.stunnedTime = this.stunnedTime;
@@ -160,8 +160,8 @@ export class AbilityThief extends Ability{
 
 export class AbilityImmortal extends Ability{
     abilityName = "immortal";
-    coolDownTime = 1000;
-    duration = 500;
+    coolDownTime = 700;
+    duration = 300;
     currentCoolDownTime;
     currentDuration;
 

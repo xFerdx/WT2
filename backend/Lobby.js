@@ -68,6 +68,9 @@ export class Lobby{
             u.player.status = playerStates.ALIVE;
             this.initPlayerPos(u,idx);
             u.player.ability.currentCoolDownTime = u.player.ability.coolDownTime;
+            u.player.ability.currentDuration = u.player.ability.duration;
+            u.player.ability.pressed = false;
+            u.player.ability.activated = false;
         });
         this.map = MapFactory.map1();
     }
