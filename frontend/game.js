@@ -1,11 +1,12 @@
-const socket = new WebSocket('ws://192.168.0.109:8080');//new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://192.168.0.109:8080');
 
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
 canvas.width = window.screen.width;
 canvas.height = window.screen.height;
 const notFSBuffer = [0.99,0.96]
-
+const defaultHeight = 1080;
+const defaultWidth = 1920;
 let inGame = false;
 
 const laserImagesBlue = [];
@@ -45,9 +46,6 @@ resetImage.src = '/assets/reset_icon.png';
 
 const reverseImage = new Image();
 reverseImage.src = '/assets/reverse.png';
-
-
-
 
 let picInc = 1;
 let incrementingCounter = 0;
@@ -118,8 +116,6 @@ let now = performance.now();
 let fpsSum = 0;
 let fps = 0;
 
-
-
 function draw() {
     if(incrementingCounter % 1000 === 0){console.log(players);console.log(map);}
     fpsSum += Math.round(1000000/(performance.now()*1000-now*1000));
@@ -130,8 +126,8 @@ function draw() {
     }
     fullScreenHandler();
 
-    ctx.clearRect(0, 0, 1920 + 100, 1080 + 100);
-    ctx.drawImage(bgImage, 0,0, 1920, 1080);
+    ctx.clearRect(0, 0, defaultWidth + 100, defaultHeight + 100);
+    ctx.drawImage(bgImage, 0,0, defaultWidth, defaultHeight);
 
     players.forEach(p => {
         ctx.beginPath();
@@ -256,29 +252,28 @@ function draw() {
     });
 
 
-
     ctx.fillStyle = 'white';
     ctx.font = "30px Arial";
     ctx.fillText("fps: "+fps,30,40);
 
     ctx.fillStyle = 'blue';
     ctx.font = "30px Arial";
-    ctx.fillText(scores[0],1920/2 - 21,40);
+    ctx.fillText(scores[0],defaultWidth/2 - 21,40);
     ctx.fillStyle = 'white';
-    ctx.fillText("|",1920/2, 40);
+    ctx.fillText("|",defaultWidth/2, 40);
     ctx.fillStyle = 'red';
-    ctx.fillText(scores[1],1920/2 + 10,40);
+    ctx.fillText(scores[1],defaultWidth/2 + 10,40);
 
 
     if(showWinner){
         if(scores[0] > scores[1]){
             ctx.fillStyle = 'blue';
             ctx.font = "60px Arial";
-            ctx.fillText("Blue won",1920/2 - 100, 1080/3);
+            ctx.fillText("Blue won",defaultWidth/2 - 100, defaultHeight/3);
         }else{
             ctx.fillStyle = 'red';
             ctx.font = "60px Arial";
-            ctx.fillText("Red won",1920/2 - 100, 1080/3);
+            ctx.fillText("Red won",defaultWidth/2 - 100, defaultHeight/3);
         }
     }
 
@@ -350,11 +345,11 @@ function fullScreenHandler(){
     if (document.fullscreenElement) {
         document.getElementById('FSButton').style.display = 'none';
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.scale(window.screen.width/1920,window.screen.height/1080);
+        ctx.scale(window.screen.width/defaultWidth,window.screen.height/defaultHeight);
     }else{
         document.getElementById('FSButton').style.display = 'flex';
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.scale(window.innerWidth/1920 * notFSBuffer[0],window.innerHeight/1080 * notFSBuffer[1]);
+        ctx.scale(window.innerWidth/defaultWidth * notFSBuffer[0],window.innerHeight/defaultHeight * notFSBuffer[1]);
     }
 }
 
@@ -413,9 +408,6 @@ function createTouchControls() {
         { id: 'up', label: '⬆️', gridArea: '1 / 2 / 2 / 3' },
         { id: 'down', label: '⬇️', gridArea: '3 / 2 / 4 / 3' },
         { id: 'right', label: '➡️', gridArea: '2 / 3 / 3 / 3' }
-
-
-
     ];
 
     buttons.forEach(button => {
@@ -480,10 +472,9 @@ function handleTouchStart(direction) {
         case 'special':
             sendKey('SPACE',true);
             break;
-
-
     }
 }
+
 function handleTouchEnd(direction) {
     if (!inGame) return;
     switch (direction) {
