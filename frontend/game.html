@@ -1,3 +1,4 @@
+<!--
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +31,9 @@
     <input type="text" id="userName" name="userName" placeholder="Enter your username">
     <button type="button" id="joinButton" onclick="requestJoin()">Join</button>
     <button type="button" id="requestFS" onclick="requestFS()">FS</button>
-    <label id="maxPlayerNumber">asd</label>
+    <div id="queue-status" style="display:none;">
+        Waiting for more players to join...
+    </div>
 </div>
 
 <div id="game">
@@ -38,5 +41,59 @@
 </div>
 
 <script src="game.js"></script>
+</body>
+</html>
+-->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client</title>
+
+    <link rel="stylesheet" href="game.css">
+</head>
+<body>
+
+<div id="frontPage">
+    <div id="nameInputSection">
+        <h1>Laser League</h1>
+        <input type="text" id="username" placeholder="Enter Username">
+        <button id="enterLobby" onclick="setUsername()">Set Username</button>
+    </div>
+
+    <select id="abilitySelection" label="Ability">
+        <option value="hunter">Hunter</option>
+        <option value="thief">Thief</option>
+        <option value="stunner">Stunner</option>
+        <option value="immortal">Immortal</option>
+    </select>
+
+    <div id="game-mode-selection"  style="display:none;">
+        <button class="modeButton" onclick="requestJoin(1)">1v1</button>
+        <button class="modeButton" onclick="requestJoin(2)">2v2</button>
+        <button class="modeButton" onclick="requestJoin(3)">3v3</button>
+    </div>
+
+    <div id="queue-status" style="display:none;">
+        Waiting for more players to join...
+    </div>
+</div >
+
+<div id="game">
+    <canvas id="myCanvas" width="1900" height="900"></canvas>
+</div>
+
+<div id="FSButton">
+    <button onclick="requestFS()">
+        <img id="FSImg" alt="" src="/assets/fullscreen.jpg">
+    </button>
+</div>
+
+<script src="game.js"></script>
+
 </body>
 </html>

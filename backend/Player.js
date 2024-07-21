@@ -146,6 +146,27 @@ export class Player{
        });
     }
 
+    checkPowerUpActivation(map) {
+        map.powerUps.forEach(p => {
+            if(!p.enabled)return;
+            if(this.checkPowerUpCollision(p))  //check if they touch
+                if(p.type === "reset") {
+                    p.activateReset(map);
+                }
+                else if(p.type==="reverse") {
+                    p.activateReverse(map);
+                }
+        });
+
+    }
+
+    checkPowerUpCollision (powerUp) {
+        let dx = powerUp.x - this.xPos;
+        let dy = powerUp.y - this.yPos;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < powerUp.radius + this.radius;
+    }
+
 
 }
 

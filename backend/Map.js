@@ -13,6 +13,7 @@ export class Map{
 export class MapFactory{
     static map1(){
         let m = new Map();
+
         m.lasers.push(new Laser([0.2 * Map.xMax, 0.25 * Map.yMax],3,1000,0.003, 330, false, 300, null));
         m.lasers.push(new Laser([0.2 * Map.xMax, 0.75 * Map.yMax],3,1000,0.003, 330, false, 300, null));
         m.lasers.push(new Laser([0.4 * Map.xMax, 0.25 * Map.yMax],3,1000,0.003, 330, false, 300, null));
@@ -38,6 +39,11 @@ export class MapFactory{
         m.lasers.push(new Laser([0.7 * Map.xMax, 0.625 * Map.yMax],3,1000,0.003, 330, false, 4000, null));
 
         m.lasers.push(new Laser([Map.xMax/2, Map.yMax/2],3,1000,0.003, 1100, true, 6000,null));
+
+
+        m.powerUps.push(new PowerUp(1000,50,100,"reset",15,3.0));
+        m.powerUps.push(new PowerUp(1000,100,200,"reverse",15,3.0));
+
 
         return m;
     }

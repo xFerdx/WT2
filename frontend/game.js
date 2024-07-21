@@ -29,11 +29,25 @@ for (let i = 1; i < 10; i++) {
 document.body.style.overflow = 'hidden';
 document.documentElement.style.overflow = 'hidden';
 
+document.getElementById('nameInputSection').style.display='flex';
+document.getElementById('game-mode-selection').style.display = 'none'
+document.getElementById('abilitySelection').style.display = 'none';
+document.getElementById('game').style.display = 'none';
+
 const bgImage = new Image();
 bgImage.src = '/Background/bg2.jpg';
 
 const deadImage = new Image();
 deadImage.src = '/assets/dead.png';
+
+const resetImage = new Image();
+resetImage.src = '/assets/reset_icon.png';
+
+const reverseImage = new Image();
+reverseImage.src = '/assets/reverse.png';
+
+
+
 
 let picInc = 1;
 let incrementingCounter = 0;
@@ -98,13 +112,16 @@ function sendRequestJoin(userName, playerNumber, ability){
 let players = [];
 let map;
 let scores = [0,0];
+let userName = "";
 
 let now = performance.now();
 let fpsSum = 0;
 let fps = 0;
 
+
+
 function draw() {
-    if(incrementingCounter % 1000 === 0)console.log(players);
+    if(incrementingCounter % 1000 === 0){console.log(players);console.log(map);}
     fpsSum += Math.round(1000000/(performance.now()*1000-now*1000));
     now = performance.now();
     if(Math.round(incrementingCounter) % 10 === 0){
@@ -217,6 +234,27 @@ function draw() {
         }
     });
 
+    map && map.powerUps.forEach(p=> {
+        if(!p.enabled)return;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        if(p.type==="reverse") {
+            ctx.fillStyle = 'yellow';
+        } else if(p.type==="reset") {
+            ctx.fillStyle = 'green';
+        }
+
+        ctx.fill();
+
+        ctx.closePath();
+        if(p.type==="reverse") {
+            ctx.drawImage(reverseImage,p.x-10,p.y-10,20,20);
+        }else if(p.type==="reset") {
+            ctx.drawImage(resetImage,p.x-10,p.y-10,20,20);
+        }
+
+    });
+
 
 
     ctx.fillStyle = 'white';
@@ -282,15 +320,18 @@ document.addEventListener('contextmenu', function(event) {
     event.preventDefault();
 });
 
-function requestJoin(){
-    let userName = document.getElementById('userName').value;
-    let playerNumber = document.getElementById('playerNumber').value;
-    let ability = document.getElementById('ability').value;
+function requestJoin(playerNumber){
+    let ability = document.getElementById('abilitySelection').value;
     sendRequestJoin(userName, playerNumber, ability);
+    document.getElementById('game-mode-selection').style.display = 'none';
+    document.getElementById('queue-status').style.display = 'block';
+    document.getElementById('abilitySelection').style.display = 'none';
 }
 
 function requestFS(){
-    let element = document.getElementById('myCanvas');
+    let element;
+    if(inGame)element = document.getElementById('myCanvas');
+    else element = document.getElementById('frontPage');
 
     if (element.requestFullscreen)
         element.requestFullscreen();
@@ -307,9 +348,11 @@ document.addEventListener('fullscreenchange', fullScreenHandler);
 
 function fullScreenHandler(){
     if (document.fullscreenElement) {
+        document.getElementById('FSButton').style.display = 'none';
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(window.screen.width/1920,window.screen.height/1080);
     }else{
+        document.getElementById('FSButton').style.display = 'flex';
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(window.innerWidth/1920 * notFSBuffer[0],window.innerHeight/1080 * notFSBuffer[1]);
     }
@@ -317,21 +360,145 @@ function fullScreenHandler(){
 
 function showGame(){
     fullScreenHandler();
-    document.getElementById('joinButton').disabled = true;
-    document.getElementById('myCanvas').style.display = 'block';
+    document.getElementById('enterLobby').disabled = true;
+    document.getElementById('game').style.display = 'block';
+    document.getElementById('frontPage').style.display = 'none';
+    if (isMobileDevice() ) {
+        createTouchControls();
+    }
     requestAnimationFrame(draw);
 }
 
 function closeGame(){
-    document.getElementById('joinButton').disabled = false;
-    document.getElementById('myCanvas').style.display = 'none';
+    location.reload();
 }
 
+let waitingPoints = 1;
 function updatePlayerNumberDisplay(currentNumber, maxNumber, waitingForJoin){
-    let element = document.getElementById('maxPlayerNumber');
+    let element = document.getElementById('queue-status');
     if(waitingForJoin){
-        element.textContent = currentNumber + " / " + maxNumber;
+        element.innerHTML = "Waiting for more players to join"+".".repeat(waitingPoints/10)+"<br>"+ currentNumber + " / " + maxNumber;
     }else{
         element.textContent = "";
+    }
+    waitingPoints ++;
+    if(waitingPoints === 40)waitingPoints = 0;
+}
+
+function setUsername() {
+    userName = document.getElementById('username').value;
+    document.getElementById('nameInputSection').style.display='none';
+    document.getElementById('game-mode-selection').style.display = 'block'
+    document.getElementById('abilitySelection').style.display = 'block';
+}
+
+function isMobileDevice() {
+    return /Mobi|Android|iPhone|iPad|ipod/i.test(navigator.userAgent);
+}
+
+function createTouchControls() {
+    const controlContainer = document.createElement('div');
+    controlContainer.style.position = 'fixed';
+    controlContainer.style.bottom = '30px';
+    //controlContainer.style.bottom = '50%';
+    controlContainer.style.left = '10px';
+    controlContainer.style.transform = 'translateY(0)';
+    controlContainer.style.display = 'grid';
+    controlContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    controlContainer.style.gridTemplateRows = 'repeat(3, 1fr)';
+    controlContainer.style.gap = '10px';
+
+    const buttons = [
+        { id: 'left', label: '⬅️', gridArea: '2 / 1 / 3 / 2' },
+        { id: 'up', label: '⬆️', gridArea: '1 / 2 / 2 / 3' },
+        { id: 'down', label: '⬇️', gridArea: '3 / 2 / 4 / 3' },
+        { id: 'right', label: '➡️', gridArea: '2 / 3 / 3 / 3' }
+
+
+
+    ];
+
+    buttons.forEach(button => {
+        const btn = document.createElement('button');
+        btn.id = button.id;
+        btn.innerHTML = button.label;
+        btn.style.padding = '30px';
+        btn.style.fontSize = '120px';
+        btn.style.borderRadius = '0px';
+        btn.style.backgroundColor = 'rgba(255, 255, 255, 0)';
+        btn.style.border = '1px solid #000';
+        btn.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        btn.style.gridArea = button.gridArea;
+        controlContainer.appendChild(btn);
+
+        btn.addEventListener('touchstart', () => handleTouchStart(button.id));
+        btn.addEventListener('touchend', () => handleTouchEnd(button.id));
+    });
+
+    const abilityButtonDiv = document.createElement('div');
+    abilityButtonDiv.style.position = 'fixed';
+    abilityButtonDiv.style.bottom = '20px';
+    abilityButtonDiv.style.right= '10px';
+    abilityButtonDiv.style.display = 'flex';
+    abilityButtonDiv.style.alignItems= 'center';
+
+    const abilityButton = {id: 'special', label: '🔥'};
+    const abilityBtn = document.createElement('button');
+    abilityBtn.id = abilityButton.id;
+    abilityBtn.innerHTML = abilityButton.label;
+    abilityBtn.style.padding = '30px';
+    abilityBtn.style.fontSize = '120px';
+    abilityBtn.style.borderRadius = '0px';
+    abilityBtn.style.backgroundColor = '#fff';
+    abilityBtn.style.backgroundColor = 'rgba(255, 255, 255, 0)';
+    abilityBtn.style.border = '1px solid #000';
+    abilityBtn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+    abilityButtonDiv.appendChild(abilityBtn);
+
+    abilityBtn.addEventListener('touchstart',()=>handleTouchStart(abilityButton.id));
+    abilityBtn.addEventListener('touchend',()=>handleTouchEnd(abilityButton.id));
+
+    document.body.appendChild(controlContainer);
+    document.body.appendChild(abilityButtonDiv);
+}
+
+function handleTouchStart(direction) {
+    if (!inGame) return;
+    switch (direction) {
+        case 'left':
+            sendKey('A', true);
+            break;
+        case 'up':
+            sendKey('W', true);
+            break;
+        case 'down':
+            sendKey('S', true);
+            break;
+        case 'right':
+            sendKey('D', true);
+            break;
+        case 'special':
+            sendKey('SPACE',true);
+            break;
+
+
+    }
+}
+function handleTouchEnd(direction) {
+    if (!inGame) return;
+    switch (direction) {
+        case 'left':
+            sendKey('A', false);
+            break;
+        case 'up':
+            sendKey('W', false);
+            break;
+        case 'down':
+            sendKey('S', false);
+            break;
+        case 'right':
+            sendKey('D', false);
+            break;
+
     }
 }

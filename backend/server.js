@@ -215,6 +215,7 @@ function update(){
                 u.player.updateLocation(l.map);
                 u.player.checkLaserCollision(l.map);
                 u.player.checkLaserActivation(l.map);
+                u.player.checkPowerUpActivation(l.map)
                 u.player.ability.update(l.map, l.users.map(user => user.player), u.player);
                 u.player.updateEffects();
                 u.player.checkRevive(l.users.map(user => user.player), u.player);
@@ -222,6 +223,9 @@ function update(){
 
             l.map.lasers.forEach(lasers => {
                 lasers.update();
+            });
+            l.map.powerUps.forEach(powerUps => {
+                powerUps.update();
             });
         }
         if(l.status === lobbyStates.ENDING){

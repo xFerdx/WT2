@@ -1,0 +1,114 @@
+body {
+    background-color: #000;
+    color: #fff;
+
+}
+* {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    outline: none;
+}
+
+#nameInputSection{
+
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    text-align: center;
+    animation: fadeIn 2s ease-in-out;
+}
+
+
+h1 {
+    font-size: 3em;
+    margin-bottom: 100px;
+
+    text-transform: uppercase;
+    color: #0ff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+}
+#enterLobby, .modeButton {
+    margin-top: 50px;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #000;
+    background-color: #0ff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+}
+#enterLobby:hover,.modeButton:hover {
+    background-color: #fff;
+    color: #0ff;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 1);
+}
+
+#abilitySelection {
+    padding: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #000;
+    background-color: #0ff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+    margin: 20px 0;
+}
+
+.styled-select:hover {
+    background-color: #fff;
+    color: #0ff;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+
+#game-mode-selection {
+    display: block;
+    margin-top: 20px;
+    overflow: hidden;
+}
+#frontPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    overflow: hidden;
+    justify-content: center;
+}
+
+#FSButton {
+    position: absolute;
+    top: 15px;
+    right: 10px;
+    width: 45px;
+    height: 30px;
+}
+
+button img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
