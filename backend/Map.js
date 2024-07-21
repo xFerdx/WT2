@@ -37,7 +37,6 @@ export class MapFactory{
         m.lasers.push(new Laser([0.7 * Map.xMax, 0.375 * Map.yMax],3,1000,0.003, 330, false, 4000, null));
         m.lasers.push(new Laser([0.7 * Map.xMax, 0.625 * Map.yMax],3,1000,0.003, 330, false, 4000, null));
 
-
         m.lasers.push(new Laser([Map.xMax/2, Map.yMax/2],3,1000,0.003, 1100, true, 6000,null));
 
         return m;

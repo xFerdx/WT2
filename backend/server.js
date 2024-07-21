@@ -209,7 +209,7 @@ function update(){
                 });
                 return;
             }
-            //l.checkAllPlayerDead();
+            l.checkAllPlayerDead();
 
             l.users.forEach(u => {
                 u.player.updateLocation(l.map);
