@@ -6,10 +6,46 @@
     <title>WebSocket Client</title>
     
     <style>
+@media only screen and (orientation:portrait) and (min-width: 375px) and (max-width:812px) {
+    body {
+    background-color: #000;
+    color: #fff;
+    }
+    * {
+    -webkit-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+    transform: rotate(90deg);
+
+    }
+
+}
+@media only screen and (orientation:landscape) and (min-width: 375px) and (max-width:812px){
+  *{
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+}
+
+
 body {
     background-color: #000;
     color: #fff;
 
+}
+* {
+    touch-action: manipulation;
+           -webkit-touch-callout: none;
+           -webkit-user-select: none;
+           -khtml-user-select: none;
+           -moz-user-select: none;
+           -ms-user-select: none;
+           user-select: none;
+           outline: none;
 }
 
         #nameInputSection{
@@ -52,7 +88,7 @@ body {
     background-color: #fff;
     color: #0ff;
     box-shadow: 0 0 20px rgba(255, 255, 255, 1);
-}
+}  
 
 #abilitySelection {
     padding: 15px;

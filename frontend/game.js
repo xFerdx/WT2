@@ -24,6 +24,7 @@ for (let i = 1; i < 10; i++) {
 }
 
 
+
 console.log(window.innerHeight)
 console.log(window.innerWidth)
 
@@ -32,6 +33,12 @@ bgImage.src = '/Background/bg2.jpg';
 
 const deadImage = new Image();
 deadImage.src = '/assets/dead.png';
+
+const resetImage = new Image();
+resetImage.src = '/assets/reset_icon.png';
+
+const reverseImage = new Image();
+reverseImage.src = '/assets/reverse.png';
 
 let picInc = 1;
 let incrementingCounter = 0;
@@ -201,14 +208,29 @@ function draw() {
 
             }
         }
-        map && map.powerUps.forEach(pwr => {
-            this.ctx.beginPath();
-            this.ctx.arc(pwr.location[0], pwr.location[1], 10, 0, Math.PI * 2, false);
-            this.ctx.fillStyle = 'green';
-            this.ctx.fill();
-            this.ctx.closePath();
 
-        }) 
+    });
+
+    map && map.powerUps.forEach(p=> {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        //ctx.moveTo()
+        if(p.type==="reverse") {
+            ctx.fillStyle = 'yellow';
+            
+        } else if(p.type==="reset") {
+            ctx.fillStyle = 'green';
+            
+        }
+      
+        ctx.fill();
+        
+        ctx.closePath();
+        if(p.type==="reverse") {
+            ctx.drawImage(reverseImage,p.x-10,p.y-10,20,20);
+        }else if(p.type==="reset") {
+            ctx.drawImage(resetImage,p.x-10,p.y-10,20,20);
+        }
 
     });
 
@@ -226,6 +248,127 @@ function draw() {
     else
         requestAnimationFrame(draw);
 }
+
+function isMobileDevice() {
+    return /Mobi|Android|iPhone|iPad|ipod/i.test(navigator.userAgent);
+}
+
+function createTouchControls() {
+    const controlContainer = document.createElement('div');
+    controlContainer.style.position = 'fixed';
+    controlContainer.style.bottom = '30px';
+    //controlContainer.style.bottom = '50%';
+    controlContainer.style.left = '10px';
+    controlContainer.style.transform = 'translateY(0)';
+    controlContainer.style.display = 'grid';
+    controlContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    controlContainer.style.gridTemplateRows = 'repeat(3, 1fr)';
+    controlContainer.style.gap = '10px';
+
+    const buttons = [
+        { id: 'left', label: '⬅️', gridArea: '2 / 1 / 3 / 2' },
+        { id: 'up', label: '⬆️', gridArea: '1 / 2 / 2 / 3' },
+        { id: 'down', label: '⬇️', gridArea: '3 / 2 / 4 / 3' },
+        { id: 'right', label: '➡️', gridArea: '2 / 3 / 3 / 3' }
+       
+
+      
+    ];
+
+    buttons.forEach(button => {
+        const btn = document.createElement('button');
+        btn.id = button.id;
+        btn.innerHTML = button.label;
+        btn.style.padding = '30px';
+        btn.style.fontSize = '120px';
+        btn.style.borderRadius = '0px';
+        btn.style.backgroundColor = 'rgba(255, 255, 255, 0)';
+        btn.style.border = '1px solid #000';
+        btn.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        btn.style.gridArea = button.gridArea;
+        controlContainer.appendChild(btn);
+
+        btn.addEventListener('touchstart', () => handleTouchStart(button.id));
+        btn.addEventListener('touchend', () => handleTouchEnd(button.id));
+    });
+
+    const abilityButtonDiv = document.createElement('div');
+    abilityButtonDiv.style.position = 'fixed';
+    abilityButtonDiv.style.bottom = '20px';
+    abilityButtonDiv.style.right= '10px';
+    abilityButtonDiv.style.display = 'flex';
+    abilityButtonDiv.style.alignItems= 'center';
+
+    const abilityButton = {id: 'special', label: '🔥'};
+    const abilityBtn = document.createElement('button');
+    abilityBtn.id = abilityButton.id;
+    abilityBtn.innerHTML = abilityButton.label;
+    abilityBtn.style.padding = '30px';
+    abilityBtn.style.fontSize = '120px';
+    abilityBtn.style.borderRadius = '0px';
+    abilityBtn.style.backgroundColor = '#fff';
+    abilityBtn.style.backgroundColor = 'rgba(255, 255, 255, 0)';
+    abilityBtn.style.border = '1px solid #000';
+    abilityBtn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+    abilityButtonDiv.appendChild(abilityBtn);
+
+    abilityBtn.addEventListener('touchstart',()=>handleTouchStart(abilityButton.id));
+    abilityBtn.addEventListener('touchend',()=>handleTouchEnd(abilityButton.id));
+
+    document.body.appendChild(controlContainer);
+    document.body.appendChild(abilityButtonDiv);
+}
+
+function handleTouchStart(direction) {
+    if (!inGame) return;
+    switch (direction) {
+        case 'left':
+            sendKey('A', true);
+            break;
+        case 'up':
+            sendKey('W', true);
+            break;
+        case 'down':
+            sendKey('S', true);
+            break;
+        case 'right':
+            sendKey('D', true);
+            break;
+        case 'special':
+            sendKey('SPACE',true);
+            break;
+            
+      
+    }
+}
+function handleTouchEnd(direction) {
+    if (!inGame) return;
+    switch (direction) {
+        case 'left':
+            sendKey('A', false);
+            break;
+        case 'up':
+            sendKey('W', false);
+            break;
+        case 'down':
+            sendKey('S', false);
+            break;
+        case 'right':
+            sendKey('D', false);
+            break;
+        
+    }
+}
+
+/* 
+document.addEventListener('DOMContentLoaded', () => {
+    if (isMobileDevice() ) {
+        createTouchControls();
+    }
+});
+*/
+
+
 document.addEventListener('keydown', (e) => {
     if(!inGame)return;
     if (e.code === "KeyA" || e.code === "ArrowLeft") sendKey('A', true);
@@ -261,6 +404,9 @@ function requestJoin(){
 function showGame(){
     console.log("showed")
     document.getElementById('enterLobby').disabled = true;
+   if (isMobileDevice() ) {
+        createTouchControls();
+   }
     requestAnimationFrame(draw);
 }
 

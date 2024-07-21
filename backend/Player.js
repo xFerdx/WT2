@@ -98,18 +98,25 @@ export class Player{
     
     checkPowerUpActivation(map) {
         map.powerUps.forEach(p => {
-            if((this.radius + 10)**2 >= (this.xPos - p.location[0])**2 +  (this.yPos - p.location[1])**2) //check if they touch
-               p.activate();
-                //activatePowerUp
-
-            map.lasers.forEach(l => {
-              l.team = -1;
-            })
+            if(this.checkPowerUpCollision(p))  //check if they touch
+               if(p.type === "reset") {
+                p.activateReset(map);
+               }
+               else if(p.type==="reverse") {
+                p.activateReverse(map);
+               }
+               
         });
-
-        
        
     }
+
+    checkPowerUpCollision (powerUp) {
+    let dx = powerUp.x - this.xPos;
+    let dy = powerUp.y - this.yPos;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < powerUp.radius + this.radius;
+
+}
 
     checkLaserCollision(map){
         if(this.status === playerStates.IMMORTAL)return;
