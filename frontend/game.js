@@ -1,4 +1,4 @@
-const socket = new WebSocket('ws://192.168.0.107:8080');//new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://192.168.0.109:8080');//new WebSocket('ws://localhost:8080');
 
 const canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
@@ -37,6 +37,7 @@ deadImage.src = '/assets/dead.png';
 
 let picInc = 1;
 let incrementingCounter = 0;
+let showWinner = false;
 
 socket.addEventListener('open', function (event) {
     console.log('Connected to WebSocket server');
@@ -57,11 +58,19 @@ socket.addEventListener('message', function (event) {
             break;
         case 'startGame':
             inGame = true;
+            updatePlayerNumberDisplay(0,0,false)
             showGame();
             break;
         case 'endGame':
             inGame = false;
+            showWinner = false;
             closeGame();
+            break;
+        case 'playerNumberUpdate':
+            updatePlayerNumberDisplay(data.message.playerNumber,data.message.maxPlayer,true);
+            break;
+        case 'showWinner':
+            showWinner = true;
             break;
         default:
             console.log("Unknown message type:", data.type);
@@ -102,8 +111,9 @@ function draw() {
         fps = Math.round(fpsSum/10);
         fpsSum = 0;
     }
+    fullScreenHandler();
 
-    ctx.clearRect(0, 0, 1920, 1080);
+    ctx.clearRect(0, 0, 1920 + 100, 1080 + 100);
     ctx.drawImage(bgImage, 0,0, 1920, 1080);
 
     players.forEach(p => {
@@ -215,13 +225,27 @@ function draw() {
 
     ctx.fillStyle = 'blue';
     ctx.font = "30px Arial";
-    ctx.fillText(scores[0],canvas.width/2 - 21,40);
+    ctx.fillText(scores[0],1920/2 - 21,40);
     ctx.fillStyle = 'white';
-    ctx.fillText("|",canvas.width/2, 40);
+    ctx.fillText("|",1920/2, 40);
     ctx.fillStyle = 'red';
-    ctx.fillText(scores[1],canvas.width/2 + 10,40);
+    ctx.fillText(scores[1],1920/2 + 10,40);
 
-    picInc+= 0.2;
+
+    if(showWinner){
+        if(scores[0] > scores[1]){
+            ctx.fillStyle = 'blue';
+            ctx.font = "60px Arial";
+            ctx.fillText("Blue won",1920/2 - 100, 1080/3);
+        }else{
+            ctx.fillStyle = 'red';
+            ctx.font = "60px Arial";
+            ctx.fillText("Red won",1920/2 - 100, 1080/3);
+        }
+    }
+
+
+    picInc += 0.2;
     incrementingCounter++;
 
 
@@ -252,6 +276,10 @@ window.addEventListener('blur', (event) => {
     sendKey('D', false);
     sendKey('S', false);
     sendKey('W', false);
+});
+
+document.addEventListener('contextmenu', function(event) {
+    event.preventDefault();
 });
 
 function requestJoin(){
@@ -297,4 +325,13 @@ function showGame(){
 function closeGame(){
     document.getElementById('joinButton').disabled = false;
     document.getElementById('myCanvas').style.display = 'none';
+}
+
+function updatePlayerNumberDisplay(currentNumber, maxNumber, waitingForJoin){
+    let element = document.getElementById('maxPlayerNumber');
+    if(waitingForJoin){
+        element.textContent = currentNumber + " / " + maxNumber;
+    }else{
+        element.textContent = "";
+    }
 }

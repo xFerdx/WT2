@@ -10,9 +10,9 @@ export class Lobby{
     map;
     users;
     maxScore;
+    endingTime;
 
-
-    constructor(isPreLobby, maxPlayers) {
+    constructor(maxPlayers = 0) {
         this.creationTime = Date.now().toString();
         this.scoreTeam1 = 0;
         this.scoreTeam2 = 0;
@@ -20,6 +20,7 @@ export class Lobby{
         this.status = lobbyStates.WAITING;
         this.users = [];
         this.maxScore = 3;
+        this.endingTime = 200;
     }
 
     closeLobby(lobbies, idx){
@@ -56,32 +57,25 @@ export class Lobby{
 
     startGame(){
         this.users.forEach((u, idx) => {
-            u.player.team = idx % 2;
-            u.player.xPos = Map.xMax * (idx % 2 === 0? 0.1 : 0.9);
-            u.player.yPos = Map.yMax / (Math.floor(this.users.length/2)+1) * (Math.floor(idx/2)+1);
+            this.initPlayerPos(u,idx);
         });
         this.map = MapFactory.map1();
         this.status = lobbyStates.RUNNING;
-        this.users.forEach(u => {
-            this.sendStartGame(u.websocket);
-        });
     }
 
     nextGameRound(){
         this.users.forEach((u, idx) => {
             u.player.status = playerStates.ALIVE;
-            u.player.team = idx % 2;
-            u.player.xPos = Map.xMax * (idx % 2 === 0? 0.1 : 0.9);
-            u.player.yPos = Map.yMax / (Math.floor(this.users.length/2)+1) * (Math.floor(idx/2)+1);
+            this.initPlayerPos(u,idx);
+            u.player.ability.currentCoolDownTime = u.player.ability.coolDownTime;
         });
         this.map = MapFactory.map1();
     }
 
-    sendStartGame(ws){
-        const payload = {
-            type: 'startGame'
-        };
-        ws.send(JSON.stringify(payload));
+    initPlayerPos(u,idx){
+        u.player.team = idx % 2;
+        u.player.xPos = Map.xMax * (idx % 2 === 0? 0.1 : 0.9);
+        u.player.yPos = Map.yMax / (Math.floor(this.users.length/2)+1) * (Math.floor(idx/2)+1);
     }
 
 }
@@ -89,5 +83,6 @@ export class Lobby{
 export const lobbyStates = {
     WAITING: 'WAITING',
     STARTING: 'STARTING',
-    RUNNING: 'RUNNING'
+    RUNNING: 'RUNNING',
+    ENDING: 'ENDING'
 }

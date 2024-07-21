@@ -58,7 +58,7 @@ const wss = new WebSocketServer({ port: 8080, host: '0.0.0.0' });
 
 let lobbies = [];
 
-lobbies.push(new Lobby(true));
+lobbies.push(new Lobby());
 
 let t = Date.now();
 
@@ -176,7 +176,7 @@ function joinLobby(ws, playerNumber, userName, ability){
     }
 
     deleteWSFromLobby(ws);
-    let lobby = new Lobby(false, playerNumber * 2);
+    let lobby = new Lobby(playerNumber * 2);
     lobby.users.push(user);
     lobbies.push(lobby);
     for (let i = 0; i < lobbies.length; i++)
@@ -189,30 +189,51 @@ function update(){
     lobbies.forEach((l, idx) => {
         if(idx === 0)return;
         if(l.users.length === 0)lobbies.splice(idx, 1);
-        if(l.maxPlayers === l.users.length && l.status !== lobbyStates.RUNNING)l.startGame();
-        if(l.status !== lobbyStates.RUNNING)return;
 
-        if(l.checkIfTeamWon()){
-            l.closeLobby(lobbies, idx)
+        if(l.status === lobbyStates.WAITING) {
             l.users.forEach(u => {
-                sendEndGame(u.websocket);
+                sendPlayerNumberUpdate(u.websocket, l.users.length, l.maxPlayers)
             });
-            return;
+            if(l.maxPlayers === l.users.length && l.status){
+                l.users.forEach(u => {
+                    sendStartGame(u.websocket);
+                });
+                l.startGame();
+            }
         }
-        l.checkAllPlayerDead();
+        if(l.status === lobbyStates.RUNNING) {
+            if (l.checkIfTeamWon()) {
+                l.status = lobbyStates.ENDING;
+                l.users.forEach(u => {
+                   sendShowWinner(u.websocket);
+                });
+                return;
+            }
+            //l.checkAllPlayerDead();
 
-        l.users.forEach(u => {
-            u.player.updateLocation(l.map);
-            u.player.checkLaserCollision(l.map);
-            u.player.checkLaserActivation(l.map);
-            u.player.ability.update(l.map, l.users.map(user => user.player), u.player);
-            u.player.updateEffects();
-            u.player.checkRevive(l.users.map(user => user.player), u.player);
-        });
+            l.users.forEach(u => {
+                u.player.updateLocation(l.map);
+                u.player.checkLaserCollision(l.map);
+                u.player.checkLaserActivation(l.map);
+                u.player.ability.update(l.map, l.users.map(user => user.player), u.player);
+                u.player.updateEffects();
+                u.player.checkRevive(l.users.map(user => user.player), u.player);
+            });
 
-        l.map.lasers.forEach(lasers => {
-            lasers.update();
-        });
+            l.map.lasers.forEach(lasers => {
+                lasers.update();
+            });
+        }
+        if(l.status === lobbyStates.ENDING){
+            if(l.endingTime === 0) {
+                l.closeLobby(lobbies, idx)
+                l.users.forEach(u => {
+                    sendEndGame(u.websocket);
+                });
+            }else{
+                l.endingTime--;
+            }
+        }
 
     });
 }
@@ -258,6 +279,31 @@ function sendScores(ws, score){
 function sendEndGame(ws){
     const payload = {
         type: 'endGame'
+    };
+    ws.send(JSON.stringify(payload));
+}
+
+function sendStartGame(ws){
+    const payload = {
+        type: 'startGame'
+    };
+    ws.send(JSON.stringify(payload));
+}
+
+function sendShowWinner(ws){
+    const payload = {
+        type: 'showWinner'
+    };
+    ws.send(JSON.stringify(payload));
+}
+
+function sendPlayerNumberUpdate(ws, playerNumber, maxPlayer){
+    const payload = {
+        type: 'playerNumberUpdate',
+        message: {
+            playerNumber: playerNumber,
+            maxPlayer: maxPlayer
+        }
     };
     ws.send(JSON.stringify(payload));
 }
